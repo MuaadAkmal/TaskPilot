@@ -1,4 +1,7 @@
-{"timestamp":"00:00:01.083","source":"Server","level":"LOG","message":"- Experiments (use with caution):"}
-{"timestamp":"00:00:01.083","source":"Server","level":"LOG","message":"  · serverActions"}
-{"timestamp":"00:00:01.083","source":"Server","level":"LOG","message":""}
-{"timestamp":"00:00:01.084","source":"Server","level":"LOG","message":"✓ Generated AGENTS.md and CLAUDE.md for AI agents. Set `agentRules: false` in next.config to disable."}
+{"timestamp":"00:00:01.347","source":"Server","level":"WARN","message":"⚠ The \"middleware\" file convention is deprecated. Please use \"proxy\" instead.\n\n  To migrate automatically, run:\n  npx @next/codemod@canary middleware-to-proxy .\n\n  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy"}
+{"timestamp":"00:00:01.475","source":"Server","level":"LOG","message":"- Experiments (use with caution):"}
+{"timestamp":"00:00:01.475","source":"Server","level":"LOG","message":"  · serverActions"}
+{"timestamp":"00:00:01.475","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:00:53.879","source":"Server","level":"ERROR","message":"⨯ Error: Publishable key not valid."}
+{"timestamp":"00:00:55.459","source":"Browser","level":"ERROR","message":"Uncaught Error: Publishable key not valid."}
+{"timestamp":"00:00:55.463","source":"Server","level":"ERROR","message":"[browser] \"Uncaught Error: Publishable key not valid.\""}
