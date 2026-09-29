@@ -1,16 +1,16 @@
-const Database = require("better-sqlite3");
 const { Client } = require("pg");
+const { execSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
 /**
  * ==============================================================================
- * TaskPilot - SQLite to PostgreSQL CMS Migration Script
+ * TaskPilot - SQLite to PostgreSQL CMS Migration Script (Zero C++ Addons)
  * ==============================================================================
  * 
- * Reads records from an existing local SQLite file (.db / .sqlite) in READ-ONLY mode,
- * transforms them to match the new TaskResolution schema, and inserts them into PostgreSQL.
- *
+ * Uses SQLite CLI / python fallback to dump records to JSON without native C++
+ * bindings to eliminate segmentation faults on Linux environments.
+ * 
  * Usage:
  * SQLITE_PATH="/path/to/old_cms.db" \
  * NEW_DATABASE_URL="postgresql://postgres:password@localhost:5432/taskpilot_db" \
@@ -33,6 +33,39 @@ function normalizeStatus(oldStatus) {
   return "PENDING_VERIFICATION";
 }
 
+// Read SQLite records safely using python3 or sqlite3 CLI
+function readSqliteRecords(dbPath) {
+  const pythonScript = `
+import sqlite3, json, sys
+
+try:
+    conn = sqlite3.connect("file:${dbPath}?mode=ro", uri=True)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM Task ORDER BY createdAt ASC")
+    rows = [dict(row) for row in cursor.fetchall()]
+    print(json.dumps(rows))
+except Exception as e:
+    sys.stderr.write(str(e))
+    sys.exit(1)
+`;
+
+  try {
+    const output = execSync(`python3 -c '${pythonScript.replace(/'/g, "'\\''")}'`, {
+      maxBuffer: 50 * 1024 * 1024,
+      encoding: "utf-8",
+    });
+    return JSON.parse(output);
+  } catch (pyErr) {
+    console.warn("⚠️ Python extractor failed, falling back to sqlite3 CLI JSON dump...");
+    const sqliteCliOutput = execSync(`sqlite3 "${dbPath}" ".mode json" "SELECT * FROM Task ORDER BY createdAt ASC;"`, {
+      maxBuffer: 50 * 1024 * 1024,
+      encoding: "utf-8",
+    });
+    return JSON.parse(sqliteCliOutput);
+  }
+}
+
 async function runMigration() {
   console.log("==================================================");
   console.log("🚀 Starting TaskPilot CMS Migration: SQLite -> PostgreSQL");
@@ -42,69 +75,36 @@ async function runMigration() {
 
   if (!fs.existsSync(SQLITE_PATH)) {
     console.error(`❌ Error: Source SQLite file does not exist at "${SQLITE_PATH}".`);
-    console.error(`Please provide the correct path using: SQLITE_PATH="/path/to/your/db.db" node scripts/migrate-cms-sqlite-to-postgres.js`);
     process.exit(1);
   }
 
-  // 1. Open SQLite database in READ-ONLY mode to guarantee zero alterations to source
-  let sqliteDb;
+  // 1. Fetch records safely without native C++ crashes
+  let oldTasks = [];
   try {
-    sqliteDb = new Database(SQLITE_PATH, { readonly: true, fileMustExist: true });
-    console.log("✅ Opened source SQLite database in READ-ONLY mode (zero modification risk).");
+    console.log("⏳ Reading records safely in READ-ONLY mode from SQLite...");
+    oldTasks = readSqliteRecords(SQLITE_PATH);
+    console.log(`📦 Successfully extracted ${oldTasks.length} task records from SQLite.\n`);
   } catch (err) {
-    console.error("❌ Failed to open SQLite database:", err.message);
+    console.error("❌ Failed to read from SQLite:", err.message);
     process.exit(1);
   }
 
-  // 2. Connect to target PostgreSQL database
+  if (oldTasks.length === 0) {
+    console.log("ℹ️ No records found to migrate. Done.");
+    return;
+  }
+
+  // 2. Connect to PostgreSQL
   const pgClient = new Client({ connectionString: NEW_DATABASE_URL });
   try {
     await pgClient.connect();
     console.log("✅ Connected to target PostgreSQL database.\n");
   } catch (err) {
     console.error("❌ Failed to connect to target PostgreSQL database:", err.message);
-    sqliteDb.close();
     process.exit(1);
   }
 
   try {
-    // 3. Query records from SQLite Task table
-    console.log("⏳ Reading records from SQLite 'Task' table...");
-    
-    // Check available columns dynamically to prevent runtime column errors
-    const tableInfo = sqliteDb.pragma("table_info(Task)");
-    const columnNames = tableInfo.map((c) => c.name);
-    console.log(`ℹ️ Detected columns in source Task table: ${columnNames.join(", ")}`);
-
-    const hasDotAndLea = columnNames.includes("dotAndLea");
-    const hasSolutionProvided = columnNames.includes("solutionProvided");
-    const hasAssignedToId = columnNames.includes("assignedToId");
-
-    const query = `
-      SELECT 
-        id, 
-        lsa, 
-        tsp, 
-        ${hasDotAndLea ? '"dotAndLea"' : 'NULL as "dotAndLea"'}, 
-        "problemDescription", 
-        status, 
-        ${hasSolutionProvided ? '"solutionProvided"' : 'NULL as "solutionProvided"'}, 
-        remarks, 
-        "createdAt", 
-        "updatedAt"
-      FROM Task
-      ORDER BY "createdAt" ASC
-    `;
-
-    const oldTasks = sqliteDb.prepare(query).all();
-    console.log(`📦 Found ${oldTasks.length} task records in SQLite.\n`);
-
-    if (oldTasks.length === 0) {
-      console.log("ℹ️ No records found to migrate. Done.");
-      return;
-    }
-
-    // 4. Transform and insert each record into PostgreSQL TaskResolution
     console.log("⏳ Inserting transformed records into PostgreSQL 'TaskResolution' table...");
     let insertedCount = 0;
     let skippedCount = 0;
@@ -117,10 +117,9 @@ async function runMigration() {
       const raisedByName = (old.dotAndLea || "DOT").trim();
       const problemDescription = (old.problemDescription || "No description provided").trim();
       const solution = (old.solutionProvided || (status === "RESOLVED" ? "Resolved" : "Under triage")).trim();
-      const remarks = old.remarks ? old.remarks.trim() : null;
+      const remarks = old.remarks ? String(old.remarks).trim() : null;
       const downtimeMinutes = 0;
 
-      // Handle timestamps properly whether integer ms or ISO string
       let createdAt = new Date();
       if (old.createdAt) {
         createdAt = typeof old.createdAt === "number" ? new Date(old.createdAt) : new Date(old.createdAt);
@@ -182,9 +181,8 @@ async function runMigration() {
   } catch (error) {
     console.error("❌ Migration error:", error);
   } finally {
-    sqliteDb.close();
     await pgClient.end();
-    console.log("🔌 All database connections closed safely.");
+    console.log("🔌 PostgreSQL connection closed safely.");
   }
 }
 
