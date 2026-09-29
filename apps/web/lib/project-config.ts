@@ -173,7 +173,7 @@ export const CIAS_RAISED_BY_OPTIONS = [
 export const PROJECTS: ProjectMeta[] = [
   {
     code: "CMS",
-    name: "CMS (Central Monitoring System)",
+    name: "CMS",
     badge: "CMS",
     description: "Centralized Monitoring System for Telecom Operations and Circles",
     color: "bg-indigo-600 text-white",
@@ -187,7 +187,7 @@ export const PROJECTS: ProjectMeta[] = [
   },
   {
     code: "CIAS",
-    name: "CIAS (Core Infrastructure Access & Security)",
+    name: "CIAS",
     badge: "CIAS",
     description: "Access control, biometric gates, perimeter devices & security logging",
     color: "bg-amber-600 text-white",
@@ -201,7 +201,7 @@ export const PROJECTS: ProjectMeta[] = [
   },
   {
     code: "TSOC",
-    name: "TSOC (Telecom Security Operations Center)",
+    name: "TSOC",
     badge: "TSOC",
     description: "Telecom Security Operations Center, Threat Hunting & Incident Response",
     color: "bg-rose-600 text-white",
@@ -215,7 +215,7 @@ export const PROJECTS: ProjectMeta[] = [
   },
   {
     code: "MCX",
-    name: "MCX (Mission Critical Push-to-Talk)",
+    name: "MCX",
     badge: "MCX",
     description: "Mission Critical Push-to-Talk & Broadband Communications Platform",
     color: "bg-purple-600 text-white",
@@ -229,7 +229,7 @@ export const PROJECTS: ProjectMeta[] = [
   },
   {
     code: "CDR",
-    name: "CDR (Call Detail Records)",
+    name: "CDR",
     badge: "CDR",
     description: "Call Detail Record Ingestion, Mediation & Forensic Processing",
     color: "bg-cyan-600 text-white",
@@ -243,7 +243,7 @@ export const PROJECTS: ProjectMeta[] = [
   },
   {
     code: "IPDR",
-    name: "IPDR (Internet Protocol Detail Record)",
+    name: "IPDR",
     badge: "IPDR",
     description: "Internet Protocol Detail Record Stream & Packet Flow Analytics",
     color: "bg-blue-600 text-white",
@@ -257,7 +257,7 @@ export const PROJECTS: ProjectMeta[] = [
   },
   {
     code: "ASR",
-    name: "ASR (Automatic Speech Recognition)",
+    name: "ASR",
     badge: "ASR",
     description: "Automatic Speech Recognition & Realtime Transcription Engine",
     color: "bg-emerald-600 text-white",

@@ -93,17 +93,9 @@ function DashboardContent() {
         {/* Page Header & Navigation */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <div className="flex items-center space-x-2">
-              <span className="text-[11px] font-semibold text-indigo-500 uppercase tracking-wider">
-                Workspace
-              </span>
-            </div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight mt-0.5">
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
               {activeProjectMeta.name}
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {activeProjectMeta.description}
-            </p>
           </div>
 
           {/* Segmented Tab Switcher */}
