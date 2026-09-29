@@ -6,6 +6,7 @@ import { Header } from "@/components/header";
 import { CommandPalette } from "@/components/command-palette";
 import { PROJECTS, ProjectCode } from "@/lib/project-config";
 import { MockTask } from "@/lib/store";
+import { formatDateDDMMYYYY } from "@/lib/utils";
 import {
   Activity,
   CheckCircle2,
@@ -326,7 +327,7 @@ export default function ActivityPage() {
                 const projectMeta = PROJECTS.find((p) => p.code === item.project) || PROJECTS[0];
                 const resolvedDate = item.resolvedAt ? new Date(item.resolvedAt) : new Date(item.createdAt);
                 const timeString = resolvedDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-                const dateString = resolvedDate.toLocaleDateString([], { month: "short", day: "numeric" });
+                const dateString = formatDateDDMMYYYY(resolvedDate);
 
                 return (
                   <div
@@ -339,7 +340,7 @@ export default function ActivityPage() {
                         <span className="text-xs font-mono font-bold text-slate-700 dark:text-slate-300">
                           {timeString}
                         </span>
-                        <span className="text-[9px] text-slate-400">{dateString}</span>
+                        <span className="text-[10px] font-mono text-slate-400">{dateString}</span>
                       </div>
 
                       <div className="space-y-1">

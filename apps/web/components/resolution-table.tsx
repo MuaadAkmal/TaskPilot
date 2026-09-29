@@ -35,6 +35,7 @@ import Papa from "papaparse";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from "@/lib/utils";
 import { ResolutionEditModal } from "./resolution-edit-modal";
 import { ResolutionDetailModal } from "./resolution-detail-modal";
 import { CsvImportModal } from "./csv-import-modal";
@@ -115,7 +116,7 @@ export function ResolutionTable({
         { id: "id", label: "Ticket ID", getValue: (t) => t.id },
         { id: "lsa", label: "LSA", getValue: (t) => t.lsa },
         { id: "tsp", label: "TSP", getValue: (t) => t.tsp },
-        { id: "date", label: "DATE", getValue: (t) => new Date(t.resolvedAt || t.createdAt).toLocaleDateString() },
+        { id: "date", label: "DATE", getValue: (t) => formatDateDDMMYYYY(t.resolvedAt || t.createdAt) },
         { id: "status", label: "STATUS", getValue: (t) => t.status },
         { id: "raisedByName", label: "REQUEST RAISED BY", getValue: (t) => t.raisedByName },
         { id: "problemDescription", label: "PROBLEM DESCRIPTION", getValue: (t) => t.problemDescription },
@@ -129,7 +130,7 @@ export function ResolutionTable({
         { id: "tsp", label: "Device Location", getValue: (t) => t.tsp },
         { id: "status", label: "Status", getValue: (t) => t.status },
         { id: "raisedByName", label: "Request Raised By", getValue: (t) => t.raisedByName },
-        { id: "date", label: "Date", getValue: (t) => new Date(t.resolvedAt || t.createdAt).toLocaleDateString() },
+        { id: "date", label: "Date", getValue: (t) => formatDateDDMMYYYY(t.resolvedAt || t.createdAt) },
         { id: "problemDescription", label: "Problem", getValue: (t) => t.problemDescription },
         { id: "solution", label: "Solution", getValue: (t) => t.solution },
         { id: "remarks", label: "Remarks", getValue: (t) => t.remarks || "" },
@@ -138,7 +139,7 @@ export function ResolutionTable({
     if (isTsoc || isMcx) {
       return [
         { id: "id", label: "Ticket ID", getValue: (t) => t.id },
-        { id: "date", label: "DATE", getValue: (t) => new Date(t.resolvedAt || t.createdAt).toLocaleDateString() },
+        { id: "date", label: "DATE", getValue: (t) => formatDateDDMMYYYY(t.resolvedAt || t.createdAt) },
         { id: "status", label: "STATUS", getValue: (t) => t.status },
         { id: "raisedByName", label: "REQUEST RAISED BY", getValue: (t) => t.raisedByName },
         { id: "problemDescription", label: "PROBLEM DESCRIPTION", getValue: (t) => t.problemDescription },
@@ -154,8 +155,8 @@ export function ResolutionTable({
       { id: "lsa", label: activeProjectMeta.fields.secondaryFieldLabel, getValue: (t) => t.lsa },
       { id: "status", label: "Status", getValue: (t) => t.status },
       { id: "raisedByName", label: "Request Raised By", getValue: (t) => t.raisedByName },
-      { id: "createdAt", label: "Created At", getValue: (t) => new Date(t.createdAt).toLocaleString() },
-      { id: "resolvedAt", label: "Resolved At", getValue: (t) => (t.resolvedAt ? new Date(t.resolvedAt).toLocaleString() : "") },
+      { id: "createdAt", label: "Created At", getValue: (t) => formatDateTimeDDMMYYYY(t.createdAt) },
+      { id: "resolvedAt", label: "Resolved At", getValue: (t) => (t.resolvedAt ? formatDateTimeDDMMYYYY(t.resolvedAt) : "") },
       { id: "downtimeMinutes", label: "Downtime (Minutes)", getValue: (t) => t.downtimeMinutes || 0 },
       { id: "problemDescription", label: "Problem description / Activity Detail", getValue: (t) => t.problemDescription },
       { id: "solution", label: "Solution", getValue: (t) => t.solution },
@@ -291,9 +292,9 @@ export function ResolutionTable({
       doc.text(`TaskPilot - ${activeProjectMeta.name} Incident Report`, 14, 15);
       doc.setFontSize(9);
       doc.setTextColor(100);
-      const dateNote = exportScope === "date_range" ? ` | Range: ${startDate || "Start"} to ${endDate || "Now"}` : "";
+      const dateNote = exportScope === "date_range" ? ` | Range: ${startDate ? formatDateDDMMYYYY(startDate) : "Start"} to ${endDate ? formatDateDDMMYYYY(endDate) : "Now"}` : "";
       doc.text(
-        `Generated: ${new Date().toLocaleString()} | Total Records: ${dataset.length} | Columns: ${activeCols.length}${dateNote}`,
+        `Generated: ${formatDateTimeDDMMYYYY(new Date())} | Total Records: ${dataset.length} | Columns: ${activeCols.length}${dateNote}`,
         14,
         21
       );
@@ -807,7 +808,7 @@ export function ResolutionTable({
                         {task.tsp}
                       </td>
                       <td className="py-2.5 px-3 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
-                        {new Date(task.resolvedAt || task.createdAt).toLocaleDateString()}
+                        {formatDateDDMMYYYY(task.resolvedAt || task.createdAt)}
                       </td>
                       <td className="py-2.5 px-3">{getStatusBadge(task.status)}</td>
                       <td className="py-2.5 px-3 font-medium text-slate-800 dark:text-slate-200">
@@ -833,7 +834,7 @@ export function ResolutionTable({
                         {task.raisedByName}
                       </td>
                       <td className="py-2.5 px-3 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
-                        {new Date(task.resolvedAt || task.createdAt).toLocaleDateString()}
+                        {formatDateDDMMYYYY(task.resolvedAt || task.createdAt)}
                       </td>
                       <td className="py-2.5 px-3 text-slate-700 dark:text-slate-300 max-w-[200px] truncate">
                         {task.problemDescription}
@@ -848,7 +849,7 @@ export function ResolutionTable({
                   ) : isTsoc || isMcx ? (
                     <>
                       <td className="py-2.5 px-3 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
-                        {new Date(task.resolvedAt || task.createdAt).toLocaleDateString()}
+                        {formatDateDDMMYYYY(task.resolvedAt || task.createdAt)}
                       </td>
                       <td className="py-2.5 px-3">{getStatusBadge(task.status)}</td>
                       <td className="py-2.5 px-3 font-medium text-slate-800 dark:text-slate-200">
@@ -877,7 +878,7 @@ export function ResolutionTable({
                         {task.raisedByName}
                       </td>
                       <td className="py-2.5 px-3 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
-                        {new Date(task.resolvedAt || task.createdAt).toLocaleDateString()}
+                        {formatDateDDMMYYYY(task.resolvedAt || task.createdAt)}
                       </td>
                       <td className="py-2.5 px-3 text-slate-700 dark:text-slate-300 max-w-[200px] truncate">
                         {task.problemDescription}

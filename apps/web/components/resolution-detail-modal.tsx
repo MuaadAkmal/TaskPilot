@@ -2,7 +2,7 @@
 
 import React from "react";
 import { MockTask } from "@/lib/store";
-import { formatDowntime } from "@/lib/utils";
+import { formatDowntime, formatDateTimeDDMMYYYY } from "@/lib/utils";
 import { X, CheckCircle2, Clock, MapPin, User, FileText } from "lucide-react";
 
 interface ResolutionDetailModalProps {
@@ -85,9 +85,9 @@ export function ResolutionDetailModal({ task, onClose }: ResolutionDetailModalPr
           )}
 
           {/* Footer attribution */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-            <div>Reported by: <strong className="text-slate-600">{task.raisedByName}</strong></div>
-            <div>Resolved at: <strong className="text-slate-600">{new Date(task.resolvedAt || task.createdAt).toLocaleString()}</strong></div>
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-400">
+            <div>Reported by: <strong className="text-slate-600 dark:text-slate-300">{task.raisedByName}</strong></div>
+            <div>Timestamp: <strong className="text-slate-600 dark:text-slate-300">{formatDateTimeDDMMYYYY(task.resolvedAt || task.createdAt)}</strong></div>
           </div>
         </div>
 
