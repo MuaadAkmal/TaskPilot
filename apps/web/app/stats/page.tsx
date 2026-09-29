@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Header } from "@/components/header";
+import { CommandPalette } from "@/components/command-palette";
 import { ProjectCode, PROJECTS } from "@/lib/project-config";
 import { MockTask } from "@/lib/store";
 import {
@@ -111,6 +112,7 @@ function StatsContent() {
   return (
     <div className="min-h-screen flex flex-col bg-[#fafafa] dark:bg-[#09090b] transition-colors">
       <Header currentProject={currentProject} />
+      <CommandPalette currentProject={currentProject} />
 
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6">
         {/* Minimal Page Title */}

@@ -13,6 +13,8 @@ export interface MockTask {
   resolvedAt: string | null;
   downtimeMinutes: number | null;
   raisedByName: string;
+  createdByName?: string | null;
+  createdByEmail?: string | null;
   docLinks: string[];
   updatedAt: string;
 }

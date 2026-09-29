@@ -70,6 +70,8 @@ export async function GET(req: Request) {
           lsa: t.lsa,
           status: t.status as any,
           raisedByName: t.raisedByName,
+          createdByName: t.createdByName || null,
+          createdByEmail: t.createdByEmail || null,
           problemDescription: t.problemDescription,
           solution: t.solution,
           remarks: t.remarks || null,
@@ -87,6 +89,8 @@ export async function GET(req: Request) {
           lsa: t.lsa,
           status: t.status as any,
           raisedByName: t.raisedByName,
+          createdByName: t.createdByName || null,
+          createdByEmail: t.createdByEmail || null,
           problemDescription: t.problemDescription,
           solution: t.solution,
           remarks: t.remarks || null,
@@ -128,6 +132,8 @@ export async function GET(req: Request) {
           t.problemDescription.toLowerCase().includes(search) ||
           t.solution.toLowerCase().includes(search) ||
           t.raisedByName.toLowerCase().includes(search) ||
+          (t.createdByName && t.createdByName.toLowerCase().includes(search)) ||
+          (t.createdByEmail && t.createdByEmail.toLowerCase().includes(search)) ||
           (t.remarks && t.remarks.toLowerCase().includes(search))
       );
     }
@@ -168,6 +174,8 @@ export async function POST(req: Request) {
       lsa,
       status = "RESOLVED",
       raisedByName = "NOC Team",
+      createdByName = "NOC Engineer",
+      createdByEmail = "engineer@taskpilot.io",
       problemDescription,
       solution,
       remarks,
@@ -199,6 +207,8 @@ export async function POST(req: Request) {
           lsa,
           status,
           raisedByName,
+          createdByName,
+          createdByEmail,
           problemDescription,
           solution,
           remarks,
@@ -215,6 +225,8 @@ export async function POST(req: Request) {
         lsa: dbTask.lsa,
         status: dbTask.status as any,
         raisedByName: dbTask.raisedByName,
+        createdByName: dbTask.createdByName || createdByName,
+        createdByEmail: dbTask.createdByEmail || createdByEmail,
         problemDescription: dbTask.problemDescription,
         solution: dbTask.solution,
         remarks: dbTask.remarks || null,
@@ -232,6 +244,8 @@ export async function POST(req: Request) {
         lsa,
         status,
         raisedByName,
+        createdByName,
+        createdByEmail,
         problemDescription,
         solution,
         remarks: remarks || null,
@@ -253,5 +267,56 @@ export async function POST(req: Request) {
     return NextResponse.json({ task: createdTask }, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || "Failed to create task" }, { status: 500 });
+  }
+}
+
+export async function PUT(req: Request) {
+  try {
+    const body = await req.json();
+    const { id, tsp, lsa, status, raisedByName, problemDescription, solution, remarks } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: "Missing required task ID" }, { status: 400 });
+    }
+
+    const numericId = parseInt(id, 10);
+    if (!isNaN(numericId)) {
+      try {
+        const updatedDb = await prisma.taskResolution.update({
+          where: { id: numericId },
+          data: {
+            ...(tsp && { tsp }),
+            ...(lsa && { lsa }),
+            ...(status && { status }),
+            ...(raisedByName && { raisedByName }),
+            ...(problemDescription && { problemDescription }),
+            ...(solution && { solution }),
+            ...(remarks !== undefined && { remarks }),
+          },
+        });
+
+        return NextResponse.json({ task: updatedDb }, { status: 200 });
+      } catch (dbErr) {
+        console.warn("DB update failed, updating memory store fallback:", dbErr);
+      }
+    }
+
+    const updatedTask = taskStore.update(id, {
+      tsp,
+      lsa,
+      status,
+      raisedByName,
+      problemDescription,
+      solution,
+      remarks,
+    });
+
+    if (!updatedTask) {
+      return NextResponse.json({ error: "Task not found." }, { status: 404 });
+    }
+
+    return NextResponse.json({ task: updatedTask }, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || "Failed to update task" }, { status: 500 });
   }
 }

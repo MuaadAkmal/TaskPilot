@@ -39,6 +39,8 @@ model TaskResolution {
   
   // Optional relations and metadata
   createdById        String?
+  createdByName      String?  // Name of the engineer/user who entered this task
+  createdByEmail     String?  // Email of the engineer/user who entered this task
   createdBy          User?    @relation("TaskCreator", fields: [createdById], references: [id])
   
   createdAt          DateTime @default(now())

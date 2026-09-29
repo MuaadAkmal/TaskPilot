@@ -12,6 +12,7 @@ import {
   Search,
   Filter,
   Download,
+  Upload,
   Calendar,
   X,
   FileSpreadsheet,
@@ -36,6 +37,7 @@ import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
 import { ResolutionEditModal } from "./resolution-edit-modal";
 import { ResolutionDetailModal } from "./resolution-detail-modal";
+import { CsvImportModal } from "./csv-import-modal";
 
 interface ResolutionTableProps {
   tasks: MockTask[];
@@ -97,6 +99,9 @@ export function ResolutionTable({
   const [exportFormat, setExportFormat] = useState<"csv" | "pdf">("csv");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
+  const [csvImportModalOpen, setCsvImportModalOpen] = useState(false);
 
   const isTsoc = currentProject === "TSOC";
   const isMcx = currentProject === "MCX";
@@ -173,6 +178,51 @@ export function ResolutionTable({
 
   const selectAllColumns = () => {
     setSelectedColumnIds(availableColumns.map((c) => c.id));
+  };
+
+  const toggleSelectRow = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedRowIds((prev) =>
+      prev.includes(id) ? prev.filter((rowId) => rowId !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAllRows = () => {
+    if (selectedRowIds.length === tasks.length) {
+      setSelectedRowIds([]);
+    } else {
+      setSelectedRowIds(tasks.map((t) => t.id));
+    }
+  };
+
+  const handleBulkStatusChange = async (targetStatus: string) => {
+    if (selectedRowIds.length === 0) return;
+    setIsBulkUpdating(true);
+    try {
+      const res = await fetch("/api/tasks/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "updateStatus",
+          ids: selectedRowIds,
+          status: targetStatus,
+          project: currentProject,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(`Updated status of ${data.count} incidents to ${targetStatus}!`);
+        setSelectedRowIds([]);
+        onRefresh();
+      } else {
+        toast.error(data.error || "Failed to bulk update status.");
+      }
+    } catch (err) {
+      toast.error("Network error during bulk update.");
+    } finally {
+      setIsBulkUpdating(false);
+    }
   };
 
   const filterByDateRange = (list: MockTask[]) => {
@@ -349,6 +399,16 @@ export function ResolutionTable({
             <option value="downtime_desc">Downtime (High)</option>
             <option value="downtime_asc">Downtime (Low)</option>
           </select>
+
+          {/* Bulk Import CSV Button */}
+          <button
+            onClick={() => setCsvImportModalOpen(true)}
+            className="flex items-center space-x-1.5 text-xs bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 px-2.5 py-1.5 rounded-lg transition font-medium"
+            title="Import incidents from a CSV file"
+          >
+            <Upload className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            <span>Import CSV</span>
+          </button>
 
           {/* Export Button & Dropdown */}
           <div className="relative">
@@ -564,6 +624,53 @@ export function ResolutionTable({
         </div>
       )}
 
+      {/* Bulk Action Toolbar (Appears when 1+ rows selected) */}
+      {selectedRowIds.length > 0 && (
+        <div className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-4 py-2.5 rounded-xl flex flex-wrap items-center justify-between gap-3 shadow-md animate-in fade-in slide-in-from-top-2 duration-150">
+          <div className="flex items-center space-x-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span className="text-xs font-semibold">
+              {selectedRowIds.length} incident{selectedRowIds.length > 1 ? "s" : ""} selected
+            </span>
+            <button
+              onClick={() => setSelectedRowIds([])}
+              className="text-[11px] underline opacity-80 hover:opacity-100 ml-2"
+            >
+              Clear selection
+            </button>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <span className="text-[11px] opacity-80 hidden sm:inline">Set Status:</span>
+            <button
+              onClick={() => handleBulkStatusChange("RESOLVED")}
+              disabled={isBulkUpdating}
+              className="px-2.5 py-1 text-xs font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition flex items-center space-x-1 shadow-xs disabled:opacity-50"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Mark Resolved</span>
+            </button>
+
+            <button
+              onClick={() => handleBulkStatusChange("IN_PROGRESS")}
+              disabled={isBulkUpdating}
+              className="px-2.5 py-1 text-xs font-medium bg-amber-600 text-white rounded-lg hover:bg-amber-500 transition flex items-center space-x-1 shadow-xs disabled:opacity-50"
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span>In Progress</span>
+            </button>
+
+            <button
+              onClick={() => handleBulkStatusChange("CLOSED")}
+              disabled={isBulkUpdating}
+              className="px-2.5 py-1 text-xs font-medium bg-slate-700 dark:bg-slate-300 text-white dark:text-slate-900 rounded-lg hover:bg-slate-600 transition flex items-center space-x-1 shadow-xs disabled:opacity-50"
+            >
+              <span>Close Tickets</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Clean Minimal Table */}
       <div className="overflow-x-auto min-h-[360px]">
         <table className="w-full text-left text-xs">
@@ -571,6 +678,15 @@ export function ResolutionTable({
             {isCdrOrIpdr ? (
               /* CDR & IPDR Columns: LSA, TSP, DATE, STATUS, REQUEST RAISED BY, PROBLEM DESCRIPTION, SOLUTION, REMARKS */
               <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 text-[11px] font-medium text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+                <th className="py-2.5 px-3 w-8" onClick={(e) => e.stopPropagation()}>
+                  <button onClick={toggleSelectAllRows} className="flex items-center justify-center">
+                    {tasks.length > 0 && selectedRowIds.length === tasks.length ? (
+                      <CheckSquare className="w-4 h-4 text-slate-900 dark:text-slate-100" />
+                    ) : (
+                      <Square className="w-4 h-4 text-slate-400" />
+                    )}
+                  </button>
+                </th>
                 <th className="py-2.5 px-3.5 w-14">#</th>
                 <th className="py-2.5 px-3 w-28">LSA</th>
                 <th className="py-2.5 px-3 w-28">TSP</th>
@@ -585,6 +701,15 @@ export function ResolutionTable({
             ) : isCias ? (
               /* CIAS Columns: Device Location, Status, Request Raised By, Date, Problem, Solution, Remarks */
               <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 text-[11px] font-medium text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+                <th className="py-2.5 px-3 w-8" onClick={(e) => e.stopPropagation()}>
+                  <button onClick={toggleSelectAllRows} className="flex items-center justify-center">
+                    {tasks.length > 0 && selectedRowIds.length === tasks.length ? (
+                      <CheckSquare className="w-4 h-4 text-slate-900 dark:text-slate-100" />
+                    ) : (
+                      <Square className="w-4 h-4 text-slate-400" />
+                    )}
+                  </button>
+                </th>
                 <th className="py-2.5 px-3.5 w-14">#</th>
                 <th className="py-2.5 px-3 w-36">Device Location</th>
                 <th className="py-2.5 px-3 w-24">Status</th>
@@ -598,6 +723,15 @@ export function ResolutionTable({
             ) : isTsoc || isMcx ? (
               /* TSOC / MCX Columns: DATE, STATUS, REQUEST RAISED BY, PROBLEM DESCRIPTION, SOLUTION, REMARKS */
               <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 text-[11px] font-medium text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+                <th className="py-2.5 px-3 w-8" onClick={(e) => e.stopPropagation()}>
+                  <button onClick={toggleSelectAllRows} className="flex items-center justify-center">
+                    {tasks.length > 0 && selectedRowIds.length === tasks.length ? (
+                      <CheckSquare className="w-4 h-4 text-slate-900 dark:text-slate-100" />
+                    ) : (
+                      <Square className="w-4 h-4 text-slate-400" />
+                    )}
+                  </button>
+                </th>
                 <th className="py-2.5 px-3.5 w-14">#</th>
                 <th className="py-2.5 px-3 w-32">DATE</th>
                 <th className="py-2.5 px-3 w-24">STATUS</th>
@@ -610,6 +744,15 @@ export function ResolutionTable({
             ) : (
               /* Default CMS Columns */
               <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 text-[11px] font-medium text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+                <th className="py-2.5 px-3 w-8" onClick={(e) => e.stopPropagation()}>
+                  <button onClick={toggleSelectAllRows} className="flex items-center justify-center">
+                    {tasks.length > 0 && selectedRowIds.length === tasks.length ? (
+                      <CheckSquare className="w-4 h-4 text-slate-900 dark:text-slate-100" />
+                    ) : (
+                      <Square className="w-4 h-4 text-slate-400" />
+                    )}
+                  </button>
+                </th>
                 <th className="py-2.5 px-3.5 w-14">#</th>
                 <th className="py-2.5 px-3 w-24">LSA</th>
                 <th className="py-2.5 px-3 w-28">TSP</th>
@@ -633,15 +776,29 @@ export function ResolutionTable({
                 </td>
               </tr>
             ) : (
-              tasks.map((task) => (
-                <tr
-                  key={task.id}
-                  className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition group cursor-pointer"
-                  onClick={() => setSelectedTaskForDetail(task)}
-                >
-                  <td className="py-2.5 px-3.5 font-mono text-slate-400 text-[11px]">
-                    #{task.id}
-                  </td>
+              tasks.map((task) => {
+                const isSelected = selectedRowIds.includes(task.id);
+                return (
+                  <tr
+                    key={task.id}
+                    className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition group cursor-pointer ${
+                      isSelected ? "bg-slate-50/90 dark:bg-slate-800/60" : ""
+                    }`}
+                    onClick={() => setSelectedTaskForDetail(task)}
+                  >
+                    <td className="py-2.5 px-3 w-8" onClick={(e) => toggleSelectRow(task.id, e)}>
+                      <button className="flex items-center justify-center">
+                        {isSelected ? (
+                          <CheckSquare className="w-4 h-4 text-slate-900 dark:text-slate-100" />
+                        ) : (
+                          <Square className="w-4 h-4 text-slate-400 group-hover:text-slate-600" />
+                        )}
+                      </button>
+                    </td>
+
+                    <td className="py-2.5 px-3.5 font-mono text-slate-400 text-[11px]">
+                      #{task.id}
+                    </td>
 
                   {isCdrOrIpdr ? (
                     <>
@@ -749,7 +906,8 @@ export function ResolutionTable({
                     </div>
                   </td>
                 </tr>
-              ))
+                );
+              })
             )}
           </tbody>
         </table>
@@ -802,6 +960,16 @@ export function ResolutionTable({
           onClose={() => setSelectedTaskForDetail(null)}
         />
       )}
+
+      {/* CSV Import Modal */}
+      <CsvImportModal
+        currentProject={currentProject}
+        isOpen={csvImportModalOpen}
+        onClose={() => setCsvImportModalOpen(false)}
+        onImportSuccess={() => {
+          onRefresh();
+        }}
+      />
     </div>
   );
 }

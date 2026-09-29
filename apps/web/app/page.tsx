@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Header } from "@/components/header";
+import { CommandPalette } from "@/components/command-palette";
 import { ResolutionForm } from "@/components/resolution-form";
 import { ResolutionTable } from "@/components/resolution-table";
 import { ProjectTeamView } from "@/components/project-team-view";
@@ -88,6 +89,7 @@ function DashboardContent() {
   return (
     <div className="min-h-screen flex flex-col bg-[#fafafa] dark:bg-[#09090b] transition-colors">
       <Header currentProject={currentProject} />
+      <CommandPalette currentProject={currentProject} />
 
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6">
         {/* Page Header & Navigation */}

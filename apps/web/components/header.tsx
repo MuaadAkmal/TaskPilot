@@ -140,6 +140,17 @@ export function Header({ currentProject }: HeaderProps) {
             Dashboard
           </Link>
           <Link
+            href="/activity"
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition flex items-center space-x-1.5 ${
+              pathname === "/activity"
+                ? "text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 font-semibold"
+                : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+            }`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <span>Today's Activity</span>
+          </Link>
+          <Link
             href={`/stats?project=${currentProject}`}
             className={`px-3 py-1.5 text-xs font-medium rounded-lg transition flex items-center space-x-1.5 ${
               pathname === "/stats"
@@ -165,6 +176,19 @@ export function Header({ currentProject }: HeaderProps) {
 
         {/* Right Section: Notification Tick, Theme Toggle & Profile */}
         <div className="flex items-center space-x-2.5">
+          {/* Quick Command Trigger */}
+          <button
+            onClick={() => {
+              window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
+            }}
+            className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs"
+            title="Global Command Palette (Cmd + K / Ctrl + K)"
+          >
+            <span className="text-[11px]">Search</span>
+            <kbd className="px-1 py-0.2 text-[9px] font-mono bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-slate-400">
+              ⌘K
+            </kbd>
+          </button>
           {/* Notification Opt-In Checkbox Button */}
           <button
             onClick={toggleEmailOptIn}

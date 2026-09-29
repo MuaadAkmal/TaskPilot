@@ -103,6 +103,9 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
 
     setIsSubmitting(true);
     try {
+      const storedEmail = typeof window !== "undefined" ? localStorage.getItem("user_email") || "engineer@taskpilot.io" : "engineer@taskpilot.io";
+      const storedName = typeof window !== "undefined" ? localStorage.getItem("user_name") || storedEmail.split("@")[0] : "Lead Operator";
+
       const res = await fetch("/api/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -112,6 +115,8 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
           lsa: lsaVal || "All",
           status,
           raisedByName,
+          createdByName: storedName,
+          createdByEmail: storedEmail,
           problemDescription,
           solution,
           remarks,
