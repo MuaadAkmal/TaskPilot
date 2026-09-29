@@ -803,7 +803,7 @@ export function ResolutionTable({
                   {isCdrOrIpdr ? (
                     <>
                       <td className="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-200">
-                        {CMS_LSA_FULL_NAMES[task.lsa] || task.lsa}
+                        {task.lsa}
                       </td>
                       <td className="py-2.5 px-3 font-medium text-slate-700 dark:text-slate-300">
                         {task.tsp}
@@ -869,7 +869,7 @@ export function ResolutionTable({
                   ) : (
                     <>
                       <td className="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-200">
-                        {CMS_LSA_FULL_NAMES[task.lsa] || task.lsa}
+                        {task.lsa}
                       </td>
                       <td className="py-2.5 px-3 font-medium text-slate-700 dark:text-slate-300">
                         {task.tsp}
