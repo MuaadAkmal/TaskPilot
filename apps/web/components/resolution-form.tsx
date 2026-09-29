@@ -41,11 +41,15 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
 
   // When project or activeProjectMeta changes, initialize LSA & TSP
   useEffect(() => {
-    if (isCMS || isCdrOrIpdr) {
-      const defaultLsa = CMS_LSA_LIST[0] || "KR";
+    if (isCMS) {
+      const defaultLsa = CMS_LSA_LIST[0] || "AP";
       setLsaVal(defaultLsa);
       const availableTsps = CMS_LSA_TSP_MAP[defaultLsa] || ["AT"];
       setTspVal(availableTsps[0]);
+    } else if (isCdrOrIpdr) {
+      const defaultLsa = CMS_LSA_LIST[0] || "AP";
+      setLsaVal(defaultLsa);
+      setTspVal(activeProjectMeta.fields.primaryOptions[0] || "Airtel");
     } else {
       setTspVal(activeProjectMeta.fields.primaryOptions[0] || "");
       setLsaVal(activeProjectMeta.fields.secondaryOptions[0] || "");
@@ -53,10 +57,10 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
     setRaisedByName(activeProjectMeta.fields.raisedByOptions[0] || "DOT");
   }, [project, isCMS, isCdrOrIpdr, activeProjectMeta]);
 
-  // When LSA changes in CMS / CDR / IPDR, automatically adjust available TSPs
+  // When LSA changes, automatically adjust available TSPs for CMS
   const handleLsaChange = (newLsa: string) => {
     setLsaVal(newLsa);
-    if (isCMS || isCdrOrIpdr) {
+    if (isCMS) {
       const availableTsps = CMS_LSA_TSP_MAP[newLsa] || [];
       if (!availableTsps.includes(tspVal)) {
         setTspVal(availableTsps[0] || "");
@@ -132,10 +136,9 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
   };
 
   // Determine current available TSP options
-  const currentTspOptions =
-    isCMS || isCdrOrIpdr
-      ? CMS_LSA_TSP_MAP[lsaVal] || ["AT", "BS", "RC", "RI", "VO", "TA"]
-      : activeProjectMeta.fields.primaryOptions;
+  const currentTspOptions = isCMS
+    ? CMS_LSA_TSP_MAP[lsaVal] || ["AT", "BS", "RC", "RI", "VO", "TA"]
+    : activeProjectMeta.fields.primaryOptions;
 
   return (
     <div

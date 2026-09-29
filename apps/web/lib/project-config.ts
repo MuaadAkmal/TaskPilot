@@ -183,6 +183,16 @@ export const CIAS_RAISED_BY_OPTIONS = [
   "Validation Team",
 ] as const;
 
+export const CDR_IPDR_TSPS = [
+  "Airtel",
+  "Reliance Jio",
+  "Vodafone",
+  "BSNL-EAST",
+  "BSNLWEST",
+  "BSNLNORTH",
+  "BSNLSOUTH",
+] as const;
+
 export const PROJECTS: ProjectMeta[] = [
   {
     code: "CMS",
@@ -249,7 +259,7 @@ export const PROJECTS: ProjectMeta[] = [
     fields: {
       primaryFieldLabel: "TSP",
       secondaryFieldLabel: "LSA",
-      primaryOptions: TSPS,
+      primaryOptions: CDR_IPDR_TSPS,
       secondaryOptions: CMS_LSA_LIST,
       raisedByOptions: CMS_LEA_RAISED_BY_OPTIONS,
     },
@@ -263,7 +273,7 @@ export const PROJECTS: ProjectMeta[] = [
     fields: {
       primaryFieldLabel: "TSP",
       secondaryFieldLabel: "LSA",
-      primaryOptions: TSPS,
+      primaryOptions: CDR_IPDR_TSPS,
       secondaryOptions: CMS_LSA_LIST,
       raisedByOptions: CMS_LEA_RAISED_BY_OPTIONS,
     },

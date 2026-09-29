@@ -37,7 +37,7 @@ export function ResolutionEditModal({ task, onClose, onSaved }: ResolutionEditMo
 
   const handleLsaChange = (newLsa: string) => {
     setLsa(newLsa);
-    if (isCMS || isCdrOrIpdr) {
+    if (isCMS) {
       const availableTsps = CMS_LSA_TSP_MAP[newLsa] || [];
       if (!availableTsps.includes(tsp)) {
         setTsp(availableTsps[0] || "");
@@ -79,10 +79,9 @@ export function ResolutionEditModal({ task, onClose, onSaved }: ResolutionEditMo
     }
   };
 
-  const currentTspOptions =
-    isCMS || isCdrOrIpdr
-      ? CMS_LSA_TSP_MAP[lsa] || ["AT", "BS", "RC", "RI", "VO", "TA"]
-      : activeProjectMeta.fields.primaryOptions;
+  const currentTspOptions = isCMS
+    ? CMS_LSA_TSP_MAP[lsa] || ["AT", "BS", "RC", "RI", "VO", "TA"]
+    : activeProjectMeta.fields.primaryOptions;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in duration-150">
