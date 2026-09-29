@@ -81,6 +81,13 @@ export const TSOC_RAISED_BY_OPTIONS = [
   "ITI DC TEAM",
 ] as const;
 
+export const MCX_RAISED_BY_OPTIONS = [
+  "Client",
+  "PI Team",
+  "Validation Team",
+  "Vendor",
+] as const;
+
 export const PROJECTS: ProjectMeta[] = [
   {
     code: "CMS",
@@ -94,6 +101,20 @@ export const PROJECTS: ProjectMeta[] = [
       primaryOptions: TSPS,
       secondaryOptions: LSAS,
       raisedByOptions: CMS_LEA_RAISED_BY_OPTIONS,
+    },
+  },
+  {
+    code: "MCX",
+    name: "MCX (Mission Critical Push-to-Talk)",
+    badge: "MCX",
+    description: "Mission Critical Push-to-Talk & Broadband Communications Platform",
+    color: "bg-purple-600 text-white",
+    fields: {
+      primaryFieldLabel: "Service Component",
+      secondaryFieldLabel: "Cluster / Site",
+      primaryOptions: ["MC-PTT Server", "MC-Video Gateway", "MC-Data Broker", "Floor Control Agent", "Key Management Server"],
+      secondaryOptions: ["Core-DC-Primary", "Core-DC-Secondary", "Edge-Node-01", "Edge-Node-02"],
+      raisedByOptions: MCX_RAISED_BY_OPTIONS,
     },
   },
   {
@@ -161,20 +182,6 @@ export const PROJECTS: ProjectMeta[] = [
         "Secure Vault Zone",
         "Partner Peering Hub",
       ],
-      raisedByOptions: CMS_LEA_RAISED_BY_OPTIONS,
-    },
-  },
-  {
-    code: "MCX",
-    name: "MCX (Mission Critical Push-to-Talk)",
-    badge: "MCX",
-    description: "Mission Critical Push-to-Talk & Broadband Communications Platform",
-    color: "bg-purple-600 text-white",
-    fields: {
-      primaryFieldLabel: "Service Component",
-      secondaryFieldLabel: "Cluster / Site",
-      primaryOptions: ["MC-PTT Server", "MC-Video Gateway", "MC-Data Broker", "Floor Control Agent", "Key Management Server"],
-      secondaryOptions: ["Core-DC-Primary", "Core-DC-Secondary", "Edge-Node-01", "Edge-Node-02"],
       raisedByOptions: CMS_LEA_RAISED_BY_OPTIONS,
     },
   },

@@ -69,6 +69,8 @@ export function ResolutionTable({
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
 
   const isTsoc = currentProject === "TSOC";
+  const isMcx = currentProject === "MCX";
+  const isCustomView = isTsoc || isMcx;
 
   const handleExportCSV = (scope: "filtered" | "all") => {
     const dataToExport = scope === "filtered" ? tasks : allTasks;
@@ -78,7 +80,7 @@ export function ResolutionTable({
     }
 
     const rows = dataToExport.map((t) => {
-      if (isTsoc) {
+      if (isCustomView) {
         return {
           "Ticket ID": t.id,
           DATE: t.resolvedAt || t.createdAt,
@@ -241,8 +243,8 @@ export function ResolutionTable({
       <div className="overflow-x-auto min-h-[360px]">
         <table className="w-full text-left text-xs">
           <thead>
-            {isTsoc ? (
-              /* TSOC Exact Column Layout */
+            {isCustomView ? (
+              /* TSOC / MCX Exact Column Layout */
               <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 text-[11px] font-medium text-slate-400 dark:text-slate-400 uppercase tracking-wider">
                 <th className="py-2.5 px-3.5 w-14">#</th>
                 <th className="py-2.5 px-3 w-28">DATE</th>
@@ -269,7 +271,7 @@ export function ResolutionTable({
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {tasks.length === 0 ? (
               <tr>
-                <td colSpan={isTsoc ? 8 : 7} className="py-14 text-center text-slate-400 dark:text-slate-500">
+                <td colSpan={isCustomView ? 8 : 7} className="py-14 text-center text-slate-400 dark:text-slate-500">
                   <Filter className="w-6 h-6 mx-auto mb-1 text-slate-300 dark:text-slate-600" />
                   <p className="text-xs font-medium text-slate-600 dark:text-slate-300">No records found</p>
                 </td>
@@ -282,7 +284,7 @@ export function ResolutionTable({
                     #{task.id}
                   </td>
 
-                  {isTsoc ? (
+                  {isCustomView ? (
                     <>
                       {/* DATE */}
                       <td className="py-3 px-3 text-slate-600 dark:text-slate-400 text-[11px] whitespace-nowrap">
