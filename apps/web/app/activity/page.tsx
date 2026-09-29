@@ -79,9 +79,9 @@ export default function ActivityPage() {
 
   // Aggregate stats
   const totalCount = tasks.length;
-  const resolvedCount = tasks.filter((t) => t.status === "RESOLVED" || t.status === "CLOSED").length;
+  const resolvedCount = tasks.filter((t) => t.status === "RESOLVED").length;
   const inProgressCount = tasks.filter((t) => t.status === "IN_PROGRESS").length;
-  const pendingCount = tasks.filter((t) => t.status === "PENDING_VERIFICATION").length;
+  const pendingCount = tasks.filter((t) => t.status === "PENDING").length;
 
   // Unique contributors / operators
   const activeContributors = useMemo(() => {
@@ -123,11 +123,12 @@ export default function ActivityPage() {
             In Progress
           </span>
         );
+      case "PENDING":
       case "PENDING_VERIFICATION":
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
             <AlertCircle className="w-3 h-3 mr-1" />
-            Pending Verification
+            Pending
           </span>
         );
       default:
@@ -294,8 +295,7 @@ export default function ActivityPage() {
               <option value="ALL">All Statuses</option>
               <option value="RESOLVED">Resolved</option>
               <option value="IN_PROGRESS">In Progress</option>
-              <option value="PENDING_VERIFICATION">Pending Verification</option>
-              <option value="CLOSED">Closed</option>
+              <option value="PENDING">Pending</option>
             </select>
           </div>
         </div>

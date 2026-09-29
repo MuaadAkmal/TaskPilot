@@ -94,9 +94,12 @@ export function CsvImportModal({
           lsa: lsaVal || activeProjectMeta.fields.secondaryOptions[0] || "ALL",
           problemDescription: problemVal || "Bulk imported record",
           solution: solutionVal || "Processed during shift",
-          status: ["RESOLVED", "IN_PROGRESS", "PENDING_VERIFICATION", "CLOSED"].includes(statusVal.toUpperCase())
-            ? statusVal.toUpperCase()
-            : "RESOLVED",
+          status: (() => {
+            const up = statusVal.toUpperCase();
+            if (up === "PENDING" || up === "PENDING_VERIFICATION" || up === "OPEN") return "PENDING";
+            if (up === "IN_PROGRESS" || up === "PROGRESS") return "IN_PROGRESS";
+            return "RESOLVED";
+          })(),
           raisedByName: raisedByVal,
           remarks: remarksVal || null,
           createdAt: dateVal ? new Date(dateVal).toISOString() : new Date().toISOString(),

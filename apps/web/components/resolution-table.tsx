@@ -324,6 +324,7 @@ export function ResolutionTable({
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "RESOLVED":
+      case "CLOSED":
         return (
           <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40">
             Resolved
@@ -331,20 +332,15 @@ export function ResolutionTable({
         );
       case "IN_PROGRESS":
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/40">
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40">
             In Progress
           </span>
         );
+      case "PENDING":
       case "PENDING_VERIFICATION":
         return (
           <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40">
             Pending
-          </span>
-        );
-      case "CLOSED":
-        return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-            Closed
           </span>
         );
       default:
@@ -661,11 +657,11 @@ export function ResolutionTable({
             </button>
 
             <button
-              onClick={() => handleBulkStatusChange("CLOSED")}
+              onClick={() => handleBulkStatusChange("PENDING")}
               disabled={isBulkUpdating}
-              className="px-2.5 py-1 text-xs font-medium bg-slate-700 dark:bg-slate-300 text-white dark:text-slate-900 rounded-lg hover:bg-slate-600 transition flex items-center space-x-1 shadow-xs disabled:opacity-50"
+              className="px-2.5 py-1 text-xs font-medium bg-amber-500 text-white rounded-lg hover:bg-amber-400 transition flex items-center space-x-1 shadow-xs disabled:opacity-50"
             >
-              <span>Close Tickets</span>
+              <span>Mark Pending</span>
             </button>
           </div>
         </div>

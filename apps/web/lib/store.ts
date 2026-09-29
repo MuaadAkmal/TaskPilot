@@ -5,7 +5,7 @@ export interface MockTask {
   project: ProjectCode;
   tsp: string;
   lsa: string;
-  status: "RESOLVED" | "IN_PROGRESS" | "PENDING_VERIFICATION" | "CLOSED";
+  status: "RESOLVED" | "IN_PROGRESS" | "PENDING";
   problemDescription: string;
   solution: string;
   remarks: string | null;

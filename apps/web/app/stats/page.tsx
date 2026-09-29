@@ -61,9 +61,9 @@ function StatsContent() {
   // 1. Status Metrics Breakdown
   const stats = useMemo(() => {
     const total = tasks.length;
-    const resolved = tasks.filter((t) => t.status === "RESOLVED" || t.status === "CLOSED").length;
+    const resolved = tasks.filter((t) => t.status === "RESOLVED").length;
     const inProgress = tasks.filter((t) => t.status === "IN_PROGRESS").length;
-    const pending = tasks.filter((t) => t.status === "PENDING_VERIFICATION").length;
+    const pending = tasks.filter((t) => t.status === "PENDING").length;
     const unresolved = total - resolved;
     const totalDowntime = tasks.reduce((acc, t) => acc + (t.downtimeMinutes || 0), 0);
     const avgDowntime = total > 0 ? Math.round(totalDowntime / total) : 0;
@@ -78,7 +78,7 @@ function StatsContent() {
       const key = t.tsp || "Other";
       if (!counts[key]) counts[key] = { total: 0, resolved: 0, inProgress: 0 };
       counts[key].total += 1;
-      if (t.status === "RESOLVED" || t.status === "CLOSED") counts[key].resolved += 1;
+      if (t.status === "RESOLVED") counts[key].resolved += 1;
       if (t.status === "IN_PROGRESS") counts[key].inProgress += 1;
     });
 
@@ -97,7 +97,7 @@ function StatsContent() {
       const key = t.lsa || "Other";
       if (!counts[key]) counts[key] = { total: 0, resolved: 0, inProgress: 0 };
       counts[key].total += 1;
-      if (t.status === "RESOLVED" || t.status === "CLOSED") counts[key].resolved += 1;
+      if (t.status === "RESOLVED") counts[key].resolved += 1;
       if (t.status === "IN_PROGRESS") counts[key].inProgress += 1;
     });
 
@@ -156,7 +156,7 @@ function StatsContent() {
 
           {/* In Progress */}
           <div className="bg-white dark:bg-slate-900/90 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-card p-4">
-            <div className="flex items-center justify-between text-blue-600 dark:text-blue-400 mb-2">
+            <div className="flex items-center justify-between text-amber-500 dark:text-amber-400 mb-2">
               <span className="text-xs font-medium text-slate-500 dark:text-slate-400">In Progress</span>
               <Activity className="w-4 h-4" />
             </div>
@@ -168,7 +168,7 @@ function StatsContent() {
             </p>
           </div>
 
-          {/* Pending Verification / Unresolved */}
+          {/* Pending / Unresolved */}
           <div className="bg-white dark:bg-slate-900/90 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-card p-4">
             <div className="flex items-center justify-between text-amber-500 dark:text-amber-400 mb-2">
               <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Unresolved / Pending</span>
@@ -178,7 +178,7 @@ function StatsContent() {
               {stats.unresolved}
             </div>
             <p className="text-[11px] text-slate-400 mt-1">
-              {stats.pending} pending verification
+              {stats.pending} pending action
             </p>
           </div>
         </div>
