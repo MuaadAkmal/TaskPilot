@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 
 /**
  * Normalizes varied date formats commonly found in Excel:
- * - "September 25th, 2026" / "September 23rd, 2026"
+ * - "September 25th, 2026", "September 23rd, 2026", "September 22nd, 2026", "September 21st, 2026"
  * - "25/09/2026", "2026-09-25", "25-Sep-2026"
  * - Excel numeric serial timestamps (e.g. 45678)
  */
@@ -155,7 +155,7 @@ async function seed() {
           tsp: tsp,
           status: status,
           problemDescription: problemDescription || solution || "No description provided",
-          solution: solution || problemDescription || "Pending resolution",
+          solution: solution || (status === "PENDING" || status === "IN_PROGRESS" ? "Under investigation" : "Resolved"),
           remarks: remarks || undefined,
           raisedByName: raisedByName,
           createdAt: createdAtDate,
