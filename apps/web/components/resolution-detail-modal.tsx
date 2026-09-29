@@ -7,10 +7,12 @@ import { X, CheckCircle2, Clock, MapPin, User, FileText } from "lucide-react";
 
 interface ResolutionDetailModalProps {
   task: MockTask;
+  sequenceNum?: number;
   onClose: () => void;
 }
 
-export function ResolutionDetailModal({ task, onClose }: ResolutionDetailModalProps) {
+export function ResolutionDetailModal({ task, sequenceNum, onClose }: ResolutionDetailModalProps) {
+  const displayNum = sequenceNum !== undefined ? sequenceNum : task.id;
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
@@ -18,7 +20,7 @@ export function ResolutionDetailModal({ task, onClose }: ResolutionDetailModalPr
         <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center space-x-2.5">
             <span className="font-mono text-xs font-bold px-2 py-0.5 bg-indigo-600 text-white rounded">
-              #{task.id}
+              #{displayNum}
             </span>
             <h3 className="font-bold text-sm">Resolution Incident Details</h3>
           </div>

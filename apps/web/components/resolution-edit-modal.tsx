@@ -15,11 +15,13 @@ import { toast } from "sonner";
 
 interface ResolutionEditModalProps {
   task: MockTask;
+  sequenceNum?: number;
   onClose: () => void;
   onSaved: () => void;
 }
 
-export function ResolutionEditModal({ task, onClose, onSaved }: ResolutionEditModalProps) {
+export function ResolutionEditModal({ task, sequenceNum, onClose, onSaved }: ResolutionEditModalProps) {
+  const displayNum = sequenceNum !== undefined ? sequenceNum : task.id;
   const activeProjectMeta = PROJECTS.find((p) => p.code === task.project) || PROJECTS[0];
   const raisedByList = activeProjectMeta.fields.raisedByOptions || CMS_LEA_RAISED_BY_OPTIONS;
 
@@ -89,7 +91,7 @@ export function ResolutionEditModal({ task, onClose, onSaved }: ResolutionEditMo
         {/* Header */}
         <div className="px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <span className="font-mono text-xs font-semibold text-slate-400">#{task.id}</span>
+            <span className="font-mono text-xs font-semibold text-slate-400">#{displayNum}</span>
             <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
               Edit Resolution Record
             </h3>

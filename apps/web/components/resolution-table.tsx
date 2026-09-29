@@ -92,8 +92,8 @@ export function ResolutionTable({
   setSort,
 }: ResolutionTableProps) {
   const activeProjectMeta = PROJECTS.find((p) => p.code === currentProject) || PROJECTS[0];
-  const [selectedTaskForEdit, setSelectedTaskForEdit] = useState<MockTask | null>(null);
-  const [selectedTaskForDetail, setSelectedTaskForDetail] = useState<MockTask | null>(null);
+  const [selectedTaskForEdit, setSelectedTaskForEdit] = useState<{ task: MockTask; sequenceNum: number } | null>(null);
+  const [selectedTaskForDetail, setSelectedTaskForDetail] = useState<{ task: MockTask; sequenceNum: number } | null>(null);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [exportConfigModalOpen, setExportConfigModalOpen] = useState(false);
   const [exportScope, setExportScope] = useState<"current" | "all" | "date_range">("all");
@@ -777,13 +777,14 @@ export function ResolutionTable({
             ) : (
               tasks.map((task, idx) => {
                 const isSelected = selectedRowIds.includes(task.id);
+                const sequenceNum = (page - 1) * 8 + idx + 1;
                 return (
                   <tr
                     key={task.id}
                     className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition group cursor-pointer ${
                       isSelected ? "bg-slate-50/90 dark:bg-slate-800/60" : ""
                     }`}
-                    onClick={() => setSelectedTaskForDetail(task)}
+                    onClick={() => setSelectedTaskForDetail({ task, sequenceNum })}
                   >
                     <td className="py-2.5 px-3 w-8" onClick={(e) => toggleSelectRow(task.id, e)}>
                       <button className="flex items-center justify-center">
@@ -796,7 +797,7 @@ export function ResolutionTable({
                     </td>
 
                     <td className="py-2.5 px-3.5 font-mono text-slate-400 text-xs">
-                      #{idx + 1}
+                      #{sequenceNum}
                     </td>
 
                   {isCdrOrIpdr ? (
@@ -896,7 +897,7 @@ export function ResolutionTable({
                   >
                     <div className="flex items-center justify-end space-x-1 opacity-80 group-hover:opacity-100 transition">
                       <button
-                        onClick={() => setSelectedTaskForEdit(task)}
+                        onClick={() => setSelectedTaskForEdit({ task, sequenceNum })}
                         className="p-1 rounded text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                         title="Edit Resolution"
                       >
@@ -943,7 +944,8 @@ export function ResolutionTable({
       {/* Edit Modal */}
       {selectedTaskForEdit && (
         <ResolutionEditModal
-          task={selectedTaskForEdit}
+          task={selectedTaskForEdit.task}
+          sequenceNum={selectedTaskForEdit.sequenceNum}
           onClose={() => setSelectedTaskForEdit(null)}
           onSaved={() => {
             setSelectedTaskForEdit(null);
@@ -955,7 +957,8 @@ export function ResolutionTable({
       {/* Detail Modal */}
       {selectedTaskForDetail && (
         <ResolutionDetailModal
-          task={selectedTaskForDetail}
+          task={selectedTaskForDetail.task}
+          sequenceNum={selectedTaskForDetail.sequenceNum}
           onClose={() => setSelectedTaskForDetail(null)}
         />
       )}
