@@ -11,7 +11,8 @@
     "prisma:push": "prisma db push",
     "prisma:seed": "node -r esbuild-register prisma/seed.ts",
     "prisma:seed:employees": "node prisma/seed-employees.js",
-    "prisma:seed:cms": "node prisma/seed-cms-excel.js"
+    "prisma:seed:cms": "node prisma/seed-cms-excel.js",
+    "prisma:clear:cms": "node prisma/clear-cms.js"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.39.7",
