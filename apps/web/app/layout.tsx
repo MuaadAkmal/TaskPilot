@@ -31,7 +31,7 @@ export default function RootLayout({
       enableSystem
       disableTransitionOnChange
     >
-      <div className="min-h-screen bg-[#fafafa] dark:bg-[#09090b] text-slate-900 dark:text-slate-100 transition-colors">
+      <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#09090b] text-slate-900 dark:text-slate-100 transition-colors">
         {children}
       </div>
       <Toaster position="top-right" richColors theme="system" />
