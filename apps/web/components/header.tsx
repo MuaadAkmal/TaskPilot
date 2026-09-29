@@ -6,6 +6,13 @@ import { useSearchParams, usePathname } from "next/navigation";
 import { ProjectCode, PROJECTS } from "@/lib/project-config";
 import { ThemeToggle } from "./theme-toggle";
 import {
+  UserButton,
+  SignInButton,
+  SignedIn,
+  SignedOut,
+  useUser,
+} from "@clerk/nextjs";
+import {
   FolderKanban,
   CheckCircle2,
   BellOff,
@@ -13,6 +20,7 @@ import {
   Sparkles,
   BarChart3,
   Layers,
+  LogIn,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -22,6 +30,7 @@ interface HeaderProps {
 
 export function Header({ currentProject }: HeaderProps) {
   const pathname = usePathname();
+  const { user: clerkUser, isLoaded: clerkLoaded } = useUser();
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [emailAlertsOptIn, setEmailAlertsOptIn] = useState<boolean>(true);
@@ -29,6 +38,14 @@ export function Header({ currentProject }: HeaderProps) {
   const [userTitle, setUserTitle] = useState<string>("Senior Operations Engineer");
 
   const activeProject = PROJECTS.find((p) => p.code === currentProject) || PROJECTS[0];
+
+  useEffect(() => {
+    if (clerkUser) {
+      const primaryEmail = clerkUser.primaryEmailAddress?.emailAddress;
+      if (primaryEmail) setUserEmail(primaryEmail);
+      if (clerkUser.fullName) setUserTitle(clerkUser.fullName);
+    }
+  }, [clerkUser]);
 
   useEffect(() => {
     async function loadUser() {
@@ -215,38 +232,28 @@ export function Header({ currentProject }: HeaderProps) {
           {/* Dark Mode Switcher */}
           <ThemeToggle />
 
-          {/* Profile Avatar */}
-          <div className="relative">
-            <button
-              onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-xs transition"
-            >
-              {userEmail.slice(0, 2).toUpperCase()}
-            </button>
+          {/* Authentication & Profile */}
+          <SignedIn>
+            <div className="flex items-center space-x-2 pl-1 border-l border-slate-200 dark:border-slate-800">
+              <UserButton
+                afterSignOutUrl="/sign-in"
+                appearance={{
+                  elements: {
+                    avatarBox: "w-8 h-8 rounded-lg",
+                  },
+                }}
+              />
+            </div>
+          </SignedIn>
 
-            {userMenuOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl shadow-card p-3.5 z-50 animate-in fade-in zoom-in-95 duration-100">
-                <div className="pb-2.5 border-b border-slate-100 dark:border-slate-800">
-                  <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">{userEmail}</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{userTitle}</p>
-                </div>
-
-                <div className="py-2.5 flex items-center justify-between">
-                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Email Notifications</span>
-                  <input
-                    type="checkbox"
-                    checked={emailAlertsOptIn}
-                    onChange={toggleEmailOptIn}
-                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                  />
-                </div>
-
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400">
-                  Role: <span className="font-semibold text-slate-700 dark:text-slate-300">Operations Engineer</span>
-                </div>
-              </div>
-            )}
-          </div>
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs shadow-sm transition">
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In</span>
+              </button>
+            </SignInButton>
+          </SignedOut>
         </div>
       </div>
     </header>
