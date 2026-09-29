@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { taskStore } from "@/lib/store";
+import { prisma } from "@/lib/prisma";
+import { taskStore, MockTask } from "@/lib/store";
 import { ProjectCode } from "@/lib/project-config";
 
 export async function POST(req: NextRequest) {
   try {
-    const { query, project = "CMS_VAL_FS", tsp, lsa, chat_history = [] } = await req.json();
+    const { query, project = "CMS", tsp, lsa, chat_history = [] } = await req.json();
 
     if (!query || !query.trim()) {
       return NextResponse.json({ error: "Query cannot be empty" }, { status: 400 });
@@ -37,29 +38,71 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(agentData);
       }
     } catch (microserviceErr) {
-      // Fall through to Next.js high-performance local knowledge engine fallback
+      // Fall through to live database & knowledge engine
     }
 
-    // 2. High-performance fallback: Search historical records scoped strictly to this project
-    const allTasks = taskStore.getAll(project as ProjectCode);
+    // 2. Fetch tasks from Prisma PostgreSQL / SQLite database with project scope
+    const projectFilter =
+      project === "CMS" || project === "CMS_VAL_FS"
+        ? { in: ["CMS", "CMS_VAL_FS"] }
+        : project;
+
+    let dbTasks: MockTask[] = [];
+
+    try {
+      const records = await prisma.taskResolution.findMany({
+        where: {
+          project: projectFilter,
+        },
+        orderBy: { resolvedAt: "desc" },
+      });
+
+      dbTasks = records.map((t) => ({
+        id: t.id.toString(),
+        project: t.project as any,
+        tsp: t.tsp,
+        lsa: t.lsa,
+        status: t.status as any,
+        raisedByName: t.raisedByName,
+        createdByName: t.createdByName || null,
+        createdByEmail: t.createdByEmail || null,
+        problemDescription: t.problemDescription,
+        solution: t.solution,
+        remarks: t.remarks,
+        createdAt: t.createdAt.toISOString(),
+        resolvedAt: t.resolvedAt ? t.resolvedAt.toISOString() : null,
+        downtimeMinutes: t.downtimeMinutes || 0,
+        docLinks: [],
+        updatedAt: t.updatedAt.toISOString(),
+      }));
+    } catch (dbErr) {
+      // Fallback to memory store if database is offline
+      dbTasks = taskStore.getAll(project as ProjectCode);
+    }
+
+    if (dbTasks.length === 0) {
+      dbTasks = taskStore.getAll(project as ProjectCode);
+    }
+
+    // Search historical records scoped strictly to this project
     const searchTerms = query.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2);
 
-    let candidateMatches = allTasks.filter((t) => {
-      if (tsp && tsp !== "ALL" && t.tsp !== tsp) return false;
-      if (lsa && lsa !== "ALL" && t.lsa !== lsa) return false;
+    let candidateMatches = dbTasks.filter((t) => {
+      if (tsp && tsp !== "ALL" && t.tsp.toLowerCase() !== tsp.toLowerCase()) return false;
+      if (lsa && lsa !== "ALL" && t.lsa.toLowerCase() !== lsa.toLowerCase()) return false;
 
-      const searchable = `${t.problemDescription} ${t.solution} ${t.remarks || ""} ${t.tsp} ${t.lsa}`.toLowerCase();
+      const searchable = `${t.problemDescription} ${t.solution} ${t.remarks || ""} ${t.tsp} ${t.lsa} ${t.raisedByName}`.toLowerCase();
       return searchTerms.some((term: string) => searchable.includes(term));
     });
 
     if (candidateMatches.length === 0 && (tsp || lsa)) {
-      candidateMatches = allTasks.filter((t) => {
-        const searchable = `${t.problemDescription} ${t.solution} ${t.remarks || ""}`.toLowerCase();
+      candidateMatches = dbTasks.filter((t) => {
+        const searchable = `${t.problemDescription} ${t.solution} ${t.remarks || ""} ${t.raisedByName}`.toLowerCase();
         return searchTerms.some((term: string) => searchable.includes(term));
       });
     }
 
-    const matches = candidateMatches.slice(0, 4);
+    const matches = candidateMatches.slice(0, 5);
 
     let answerMarkdown = "";
     if (matches.length > 0) {
