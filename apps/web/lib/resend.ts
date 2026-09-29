@@ -96,7 +96,7 @@ export async function sendResolutionEmailAlert({ task, teamEmails }: EmailAlertP
         </table>
 
         <div style="background-color: #f8fafc; border-left: 4px solid #6366f1; padding: 14px; margin-bottom: 16px; border-radius: 4px;">
-          <h3 style="margin: 0 0 6px 0; font-size: 13px; font-weight: 700; color: #334155; text-transform: uppercase;">Problem Description</h3>
+          <h3 style="margin: 0 0 6px 0; font-size: 13px; font-weight: 700; color: #334155; text-transform: uppercase;">Problem description / Activity Detail</h3>
           <p style="margin: 0; color: #0f172a;">${task.problemDescription}</p>
         </div>
 

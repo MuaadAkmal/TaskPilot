@@ -129,7 +129,7 @@ export function ResolutionEditModal({ task, onClose, onSaved }: ResolutionEditMo
           </div>
 
           <div>
-            <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Problem Description</label>
+            <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Problem description / Activity Detail</label>
             <textarea
               rows={3}
               value={problemDescription}

@@ -54,7 +54,7 @@ export function ResolutionDetailModal({ task, onClose }: ResolutionDetailModalPr
           {/* Problem */}
           <div>
             <h4 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider mb-1 text-slate-500">
-              Problem & Observed Symptoms
+              Problem description / Activity Detail
             </h4>
             <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 whitespace-pre-wrap leading-relaxed text-slate-900">
               {task.problemDescription}

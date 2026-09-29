@@ -204,7 +204,7 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-1">
-                Problem Description & Symptoms
+                Problem description / Activity Detail
               </label>
               <textarea
                 rows={2}

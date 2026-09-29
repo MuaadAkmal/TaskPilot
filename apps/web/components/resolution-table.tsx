@@ -85,7 +85,7 @@ export function ResolutionTable({
       "Created At": t.createdAt,
       "Resolved At": t.resolvedAt || "",
       "Downtime (Minutes)": t.downtimeMinutes || 0,
-      "Problem Description": t.problemDescription,
+      "Problem description / Activity Detail": t.problemDescription,
       "Solution Applied": t.solution,
       Remarks: t.remarks || "",
     }));
