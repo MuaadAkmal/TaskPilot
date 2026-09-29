@@ -62,54 +62,52 @@ export async function GET(req: Request) {
         }),
       ]);
 
-      if (total > 0 || dbTasks.length > 0) {
-        const formattedTasks: MockTask[] = dbTasks.map((t) => ({
-          id: t.id.toString(),
-          project: t.project as any,
-          tsp: t.tsp,
-          lsa: t.lsa,
-          status: t.status as any,
-          raisedByName: t.raisedByName,
-          createdByName: t.createdByName || null,
-          createdByEmail: t.createdByEmail || null,
-          problemDescription: t.problemDescription,
-          solution: t.solution,
-          remarks: t.remarks || null,
-          createdAt: t.createdAt.toISOString(),
-          resolvedAt: t.resolvedAt?.toISOString() || null,
-          downtimeMinutes: t.downtimeMinutes || 0,
-          docLinks: [],
-          updatedAt: t.updatedAt.toISOString(),
-        }));
+      const formattedTasks: MockTask[] = dbTasks.map((t) => ({
+        id: t.id.toString(),
+        project: t.project as any,
+        tsp: t.tsp,
+        lsa: t.lsa,
+        status: t.status as any,
+        raisedByName: t.raisedByName,
+        createdByName: t.createdByName || null,
+        createdByEmail: t.createdByEmail || null,
+        problemDescription: t.problemDescription,
+        solution: t.solution,
+        remarks: t.remarks || null,
+        createdAt: t.createdAt.toISOString(),
+        resolvedAt: t.resolvedAt?.toISOString() || null,
+        downtimeMinutes: t.downtimeMinutes || 0,
+        docLinks: [],
+        updatedAt: t.updatedAt.toISOString(),
+      }));
 
-        const formattedAll: MockTask[] = allMatching.map((t) => ({
-          id: t.id.toString(),
-          project: t.project as any,
-          tsp: t.tsp,
-          lsa: t.lsa,
-          status: t.status as any,
-          raisedByName: t.raisedByName,
-          createdByName: t.createdByName || null,
-          createdByEmail: t.createdByEmail || null,
-          problemDescription: t.problemDescription,
-          solution: t.solution,
-          remarks: t.remarks || null,
-          createdAt: t.createdAt.toISOString(),
-          resolvedAt: t.resolvedAt?.toISOString() || null,
-          downtimeMinutes: t.downtimeMinutes || 0,
-          docLinks: [],
-          updatedAt: t.updatedAt.toISOString(),
-        }));
+      const formattedAll: MockTask[] = allMatching.map((t) => ({
+        id: t.id.toString(),
+        project: t.project as any,
+        tsp: t.tsp,
+        lsa: t.lsa,
+        status: t.status as any,
+        raisedByName: t.raisedByName,
+        createdByName: t.createdByName || null,
+        createdByEmail: t.createdByEmail || null,
+        problemDescription: t.problemDescription,
+        solution: t.solution,
+        remarks: t.remarks || null,
+        createdAt: t.createdAt.toISOString(),
+        resolvedAt: t.resolvedAt?.toISOString() || null,
+        downtimeMinutes: t.downtimeMinutes || 0,
+        docLinks: [],
+        updatedAt: t.updatedAt.toISOString(),
+      }));
 
-        return NextResponse.json({
-          tasks: formattedTasks,
-          allMatchingTasks: formattedAll,
-          total,
-          page,
-          pageSize,
-          totalPages: Math.ceil(total / pageSize),
-        });
-      }
+      return NextResponse.json({
+        tasks: formattedTasks,
+        allMatchingTasks: formattedAll,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize),
+      });
     } catch (dbError) {
       console.warn("DB query failed, falling back to taskStore:", dbError);
     }

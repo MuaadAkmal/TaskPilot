@@ -1,75 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// Mock fallbacks for resilient development
-let mockUsers = [
-  {
-    id: "usr-1",
-    clerkId: "clerk_noc_1",
-    email: "sarah.jenkins@telecom.net",
-    name: "Sarah Jenkins",
-    title: "Lead Telecom & NOC Architect",
-    projects: JSON.stringify(["CMS", "CIAS", "TSOC"]),
-    role: "TEAM_LEAD",
-    receiveEmailAlerts: true,
-    alertOnProjects: "ALL",
-  },
-  {
-    id: "usr-2",
-    clerkId: "clerk_noc_2",
-    email: "alex.kumar@telecom.net",
-    name: "Alex Kumar",
-    title: "Security & CIAS Infrastructure Lead",
-    projects: JSON.stringify(["CIAS", "TSOC"]),
-    role: "ENGINEER",
-    receiveEmailAlerts: true,
-    alertOnProjects: "ALL",
-  },
-  {
-    id: "usr-3",
-    clerkId: "clerk_noc_3",
-    email: "priya.nair@telecom.net",
-    name: "Priya Nair",
-    title: "Automatic Speech Recognition (ASR) Lead",
-    projects: JSON.stringify(["ASR"]),
-    role: "TEAM_LEAD",
-    receiveEmailAlerts: false,
-    alertOnProjects: JSON.stringify(["ASR"]),
-  },
-  {
-    id: "usr-4",
-    clerkId: "clerk_noc_4",
-    email: "marcus.vance@telecom.net",
-    name: "Marcus Vance",
-    title: "CDR & IPDR Mediation Specialist",
-    projects: JSON.stringify(["CMS", "CDR", "IPDR"]),
-    role: "ENGINEER",
-    receiveEmailAlerts: true,
-    alertOnProjects: JSON.stringify(["CMS", "CDR", "IPDR"]),
-  },
-  {
-    id: "usr-5",
-    clerkId: "clerk_noc_5",
-    email: "elena.rostova@telecom.net",
-    name: "Elena Rostova",
-    title: "Mission Critical Push-to-Talk (MCX) Specialist",
-    projects: JSON.stringify(["MCX", "TSOC"]),
-    role: "ENGINEER",
-    receiveEmailAlerts: true,
-    alertOnProjects: JSON.stringify(["MCX"]),
-  },
-  {
-    id: "usr-6",
-    clerkId: "clerk_noc_6",
-    email: "tariq.mansoor@telecom.net",
-    name: "Tariq Mansoor",
-    title: "Telecom Security Operations Center (TSOC) Lead",
-    projects: JSON.stringify(["TSOC", "CIAS"]),
-    role: "TEAM_LEAD",
-    receiveEmailAlerts: true,
-    alertOnProjects: JSON.stringify(["TSOC"]),
-  },
-];
+// Empty user mock fallback
+let mockUsers: any[] = [];
 
 export async function GET(req: Request) {
   try {
@@ -83,34 +16,32 @@ export async function GET(req: Request) {
         const user = await prisma.user.findUnique({
           where: { email },
         });
-        if (user) return NextResponse.json({ user });
+        return NextResponse.json({ user: user || null });
       }
 
       const users = await prisma.user.findMany({
         orderBy: { createdAt: "desc" },
       });
 
-      if (users.length > 0) {
-        if (project) {
-          const filtered = users.filter((u) => {
-            try {
-              const assigned = JSON.parse(u.projects || "[]");
-              return assigned.includes(project) || (project === "CMS" && assigned.includes("CMS_VAL_FS"));
-            } catch {
-              return false;
-            }
-          });
-          return NextResponse.json({ users: filtered });
-        }
-        return NextResponse.json({ users });
+      if (project) {
+        const filtered = users.filter((u) => {
+          try {
+            const assigned = JSON.parse(u.projects || "[]");
+            return assigned.includes(project) || (project === "CMS" && assigned.includes("CMS_VAL_FS"));
+          } catch {
+            return false;
+          }
+        });
+        return NextResponse.json({ users: filtered });
       }
+      return NextResponse.json({ users });
     } catch (dbErr) {
-      console.warn("DB user query error, falling back to mock state:", dbErr);
+      console.warn("DB user query error, falling back to empty state:", dbErr);
     }
 
     if (email) {
       const found = mockUsers.find((u) => u.email === email);
-      return NextResponse.json({ user: found || mockUsers[0] });
+      return NextResponse.json({ user: found || null });
     }
 
     if (project) {
