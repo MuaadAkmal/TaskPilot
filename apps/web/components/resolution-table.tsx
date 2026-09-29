@@ -504,7 +504,7 @@ export function ResolutionTable({
                     handleExportPDF("custom_range");
                   }
                 }}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs px-4 py-1.5 rounded-lg shadow-sm transition flex items-center space-x-1.5"
+                className="bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 font-medium text-xs px-4 py-1.5 rounded-lg shadow-sm transition flex items-center space-x-1.5"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Export {exportFormat.toUpperCase()}</span>
