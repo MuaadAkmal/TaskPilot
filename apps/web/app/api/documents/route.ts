@@ -3,6 +3,36 @@ import { prisma } from "@/lib/prisma";
 
 let docMemoryStore: any[] = [
   {
+    id: "doc-cms-1",
+    project: "CMS",
+    title: "Central Monitoring System Standard Operating Procedure",
+    category: "SOP",
+    content: "NOC escalation protocols and circuit alarm triage matrix across telecom circles.",
+    fileUrl: "https://wiki.internal/cms/sop-v1",
+    version: "1.2.0",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "doc-cdr-1",
+    project: "CDR",
+    title: "CDR Ingestion Stream Architecture & Mediation Rules",
+    category: "ARCHITECTURE",
+    content: "Parsing schemas, carrier file delivery timers, and mediation queue retention parameters.",
+    fileUrl: "https://wiki.internal/cdr/mediation-architecture",
+    version: "2.0.1",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "doc-ipdr-1",
+    project: "IPDR",
+    title: "IPDR Streaming & Packet Flow Verification Guide",
+    category: "TROUBLESHOOTING_GUIDE",
+    content: "Step-by-step diagnostic guide for IPDR collector packet loss and timestamp synchronization.",
+    fileUrl: "https://wiki.internal/ipdr/packet-diagnostics",
+    version: "1.1.0",
+    createdAt: new Date().toISOString(),
+  },
+  {
     id: "doc-cias-1",
     project: "CIAS",
     title: "CIAS Core Network Topology & WAF Architecture",
@@ -13,21 +43,31 @@ let docMemoryStore: any[] = [
     createdAt: new Date().toISOString(),
   },
   {
-    id: "doc-cias-2",
-    project: "CIAS",
-    title: "Zero-Trust Access Token Rotation SOP",
+    id: "doc-mcx-1",
+    project: "MCX",
+    title: "MCX Floor Control Server & PTT Gateway Configuration",
     category: "SOP",
-    content: "Step-by-step standard operating procedure for emergency credential reset and SSL revocation.",
-    fileUrl: "https://wiki.internal/cias/sop/token-rotation",
-    version: "1.4.0",
+    content: "Mission Critical Push-to-Talk server parameters and multicast cluster redundancy guide.",
+    fileUrl: "https://wiki.internal/mcx/ptt-gateway",
+    version: "1.0.0",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "doc-tsoc-1",
+    project: "TSOC",
+    title: "TSOC SS7 & Diameter Threat Response Playbook",
+    category: "TROUBLESHOOTING_GUIDE",
+    content: "Immediate containment and perimeter ACL rule injection runbook for signaling attack alerts.",
+    fileUrl: "https://wiki.internal/tsoc/signaling-playbook",
+    version: "3.2.0",
     createdAt: new Date().toISOString(),
   },
   {
     id: "doc-asr-1",
     project: "ASR",
-    title: "ASR Speech-to-Text Pipeline Failover Runbook",
+    title: "Automatic Speech Recognition Pipeline Failover Runbook",
     category: "TROUBLESHOOTING_GUIDE",
-    content: "Runbook for node recovery when ASR transcriber latency exceeds 1500ms threshold.",
+    content: "Runbook for GPU node recovery and realtime speech acoustic model inference failover.",
     fileUrl: "https://wiki.internal/asr/runbooks/failover",
     version: "1.0.2",
     createdAt: new Date().toISOString(),
@@ -37,11 +77,14 @@ let docMemoryStore: any[] = [
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const project = searchParams.get("project") || "CIAS";
+    const rawProject = searchParams.get("project") || "CMS";
+    const project = rawProject === "CMS_VAL_FS" ? "CMS" : rawProject;
 
     try {
       const documents = await prisma.projectDocument.findMany({
-        where: { project },
+        where: {
+          project: { in: project === "CMS" ? ["CMS", "CMS_VAL_FS"] : [project] },
+        },
         orderBy: { createdAt: "desc" },
       });
 
@@ -52,7 +95,11 @@ export async function GET(req: Request) {
       console.warn("DB doc query error, falling back to memory:", dbErr);
     }
 
-    const filtered = docMemoryStore.filter((d) => d.project === project);
+    const filtered = docMemoryStore.filter((d) => {
+      if (project === "CMS") return d.project === "CMS" || d.project === "CMS_VAL_FS";
+      return d.project === project;
+    });
+
     return NextResponse.json({ documents: filtered });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || "Failed to load documents" }, { status: 500 });
@@ -68,9 +115,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Project, title, and description/content are required." }, { status: 400 });
     }
 
+    const targetProject = project === "CMS_VAL_FS" ? "CMS" : project;
+
     const newDoc = {
       id: `doc-${Date.now()}`,
-      project,
+      project: targetProject,
       title,
       category: category || "SOP",
       content,
@@ -82,7 +131,7 @@ export async function POST(req: Request) {
     try {
       const created = await prisma.projectDocument.create({
         data: {
-          project,
+          project: targetProject,
           title,
           category: category || "SOP",
           content,

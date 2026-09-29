@@ -1,4 +1,13 @@
-export type ProjectCode = "CMS_VAL_FS" | "ASR" | "CIAS" | "OTHER";
+export type ProjectCode =
+  | "CMS"
+  | "CDR"
+  | "IPDR"
+  | "CIAS"
+  | "MCX"
+  | "TSOC"
+  | "ASR"
+  | "CMS_VAL_FS"
+  | "OTHER";
 
 export interface ProjectMeta {
   code: ProjectCode;
@@ -48,44 +57,12 @@ export const LSAS = [
   "Himachal Pradesh",
 ] as const;
 
-export const ASR_SERVICES = [
-  "Audio Ingestion & Streaming",
-  "Acoustic Model Engine",
-  "Language & Vocabulary Decoder",
-  "Realtime Transcription Gateway",
-  "Voice Activity Detector (VAD)",
-] as const;
-
-export const ASR_NODES = [
-  "GPU-Cluster-Alpha",
-  "Inference-Pod-01",
-  "Inference-Pod-02",
-  "Streaming-Buffer-DC1",
-  "Edge-Transcriber-PoP",
-] as const;
-
-export const CIAS_DOMAINS = [
-  "Identity & Access IAM",
-  "Hardware Security Module (HSM)",
-  "Firewall & WAF Rules",
-  "Audit Log Ingestion",
-  "Vulnerability Patching",
-] as const;
-
-export const CIAS_ZONES = [
-  "Production DMZ",
-  "Internal Core Backbone",
-  "Management Subnet OOB",
-  "Secure Vault Zone",
-  "Partner Peering Hub",
-] as const;
-
 export const PROJECTS: ProjectMeta[] = [
   {
-    code: "CMS_VAL_FS",
-    name: "CMS VAL & FS",
-    badge: "CMS VAL&FS",
-    description: "Centralized Monitoring & Field Services for Telecom Circles",
+    code: "CMS",
+    name: "CMS (Central Monitoring System)",
+    badge: "CMS",
+    description: "Centralized Monitoring System for Telecom Operations and Circles",
     color: "bg-indigo-600 text-white",
     fields: {
       primaryFieldLabel: "TSP (Telecom Provider)",
@@ -95,16 +72,29 @@ export const PROJECTS: ProjectMeta[] = [
     },
   },
   {
-    code: "ASR",
-    name: "ASR (Automatic Speech Recognition)",
-    badge: "ASR",
-    description: "Automatic Speech Recognition & Realtime Transcription Engine",
-    color: "bg-emerald-600 text-white",
+    code: "CDR",
+    name: "CDR (Call Detail Records)",
+    badge: "CDR",
+    description: "Call Detail Record Ingestion, Mediation & Forensic Processing",
+    color: "bg-cyan-600 text-white",
     fields: {
-      primaryFieldLabel: "Speech Component / Pipeline",
-      secondaryFieldLabel: "Processing Cluster / Node",
-      primaryOptions: ASR_SERVICES,
-      secondaryOptions: ASR_NODES,
+      primaryFieldLabel: "Carrier / Gateway",
+      secondaryFieldLabel: "Region / Circle",
+      primaryOptions: TSPS,
+      secondaryOptions: LSAS,
+    },
+  },
+  {
+    code: "IPDR",
+    name: "IPDR (Internet Protocol Detail Record)",
+    badge: "IPDR",
+    description: "Internet Protocol Detail Record Stream & Packet Flow Analytics",
+    color: "bg-blue-600 text-white",
+    fields: {
+      primaryFieldLabel: "ISP / Gateway",
+      secondaryFieldLabel: "Zone / Node",
+      primaryOptions: TSPS,
+      secondaryOptions: LSAS,
     },
   },
   {
@@ -116,8 +106,71 @@ export const PROJECTS: ProjectMeta[] = [
     fields: {
       primaryFieldLabel: "Security Domain / Module",
       secondaryFieldLabel: "Network Zone / Tier",
-      primaryOptions: CIAS_DOMAINS,
-      secondaryOptions: CIAS_ZONES,
+      primaryOptions: [
+        "Identity & Access IAM",
+        "Hardware Security Module (HSM)",
+        "Firewall & WAF Rules",
+        "Audit Log Ingestion",
+        "Vulnerability Patching",
+      ],
+      secondaryOptions: [
+        "Production DMZ",
+        "Internal Core Backbone",
+        "Management Subnet OOB",
+        "Secure Vault Zone",
+        "Partner Peering Hub",
+      ],
+    },
+  },
+  {
+    code: "MCX",
+    name: "MCX (Mission Critical Push-to-Talk)",
+    badge: "MCX",
+    description: "Mission Critical Push-to-Talk & Broadband Communications Platform",
+    color: "bg-purple-600 text-white",
+    fields: {
+      primaryFieldLabel: "Service Component",
+      secondaryFieldLabel: "Cluster / Site",
+      primaryOptions: ["MC-PTT Server", "MC-Video Gateway", "MC-Data Broker", "Floor Control Agent", "Key Management Server"],
+      secondaryOptions: ["Core-DC-Primary", "Core-DC-Secondary", "Edge-Node-01", "Edge-Node-02"],
+    },
+  },
+  {
+    code: "TSOC",
+    name: "TSOC (Telecom Security Operations Center)",
+    badge: "TSOC",
+    description: "Telecom Security Operations Center, Threat Hunting & Incident Response",
+    color: "bg-rose-600 text-white",
+    fields: {
+      primaryFieldLabel: "Threat Vector / Category",
+      secondaryFieldLabel: "Monitored Tier",
+      primaryOptions: ["SS7/Diameter Attack", "DDoS Mitigation", "Rogue BTS / IMSI Catcher", "Malicious Traffic Surge", "BGP Hijack Alert"],
+      secondaryOptions: ["Circle Border Gateway", "Core Packet Switched", "Signaling Core", "Interconnect Gateway"],
+    },
+  },
+  {
+    code: "ASR",
+    name: "ASR (Automatic Speech Recognition)",
+    badge: "ASR",
+    description: "Automatic Speech Recognition & Realtime Transcription Engine",
+    color: "bg-emerald-600 text-white",
+    fields: {
+      primaryFieldLabel: "Speech Component / Pipeline",
+      secondaryFieldLabel: "Processing Cluster / Node",
+      primaryOptions: [
+        "Audio Ingestion & Streaming",
+        "Acoustic Model Engine",
+        "Language & Vocabulary Decoder",
+        "Realtime Transcription Gateway",
+        "Voice Activity Detector (VAD)",
+      ],
+      secondaryOptions: [
+        "GPU-Cluster-Alpha",
+        "Inference-Pod-01",
+        "Inference-Pod-02",
+        "Streaming-Buffer-DC1",
+        "Edge-Transcriber-PoP",
+      ],
     },
   },
 ];

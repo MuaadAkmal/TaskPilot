@@ -14,7 +14,9 @@ import { Users, Layers, BookOpen, Clock, Sparkles } from "lucide-react";
 
 function DashboardContent() {
   const searchParams = useSearchParams();
-  const currentProject = (searchParams.get("project") as ProjectCode) || "CMS_VAL_FS";
+  const rawProject = searchParams.get("project") as ProjectCode;
+  // Support CMS and legacy CMS_VAL_FS interchangeably
+  const currentProject: ProjectCode = (rawProject === "CMS_VAL_FS" ? "CMS" : rawProject) || "CMS";
 
   const [activeTab, setActiveTab] = useState<"workspace" | "team" | "documents">("workspace");
   const [tasks, setTasks] = useState<MockTask[]>([]);
@@ -24,7 +26,7 @@ function DashboardContent() {
   const [totalPages, setTotalPages] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Filters for CMS VAL&FS
+  // Filters for CMS
   const [search, setSearch] = useState<string>("");
   const [tsp, setTsp] = useState<string>("ALL");
   const [lsa, setLsa] = useState<string>("ALL");
@@ -32,8 +34,10 @@ function DashboardContent() {
   const [endDate, setEndDate] = useState<string>("");
   const [sort, setSort] = useState<string>("resolvedAt_desc");
 
+  const isCms = currentProject === "CMS" || (currentProject as string) === "CMS_VAL_FS";
+
   const fetchTasks = useCallback(async () => {
-    if (currentProject !== "CMS_VAL_FS") return;
+    if (!isCms) return;
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -62,14 +66,16 @@ function DashboardContent() {
     } finally {
       setLoading(false);
     }
-  }, [currentProject, page, search, tsp, lsa, startDate, endDate, sort]);
+  }, [currentProject, isCms, page, search, tsp, lsa, startDate, endDate, sort]);
 
   useEffect(() => {
     fetchTasks();
   }, [fetchTasks]);
 
-  const activeProjectMeta = PROJECTS.find((p) => p.code === currentProject) || PROJECTS[0];
-  const isCmsValFs = currentProject === "CMS_VAL_FS";
+  const activeProjectMeta =
+    PROJECTS.find((p) => p.code === currentProject) ||
+    PROJECTS.find((p) => p.code === "CMS") ||
+    PROJECTS[0];
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fafafa] dark:bg-[#09090b] transition-colors">
@@ -103,7 +109,7 @@ function DashboardContent() {
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
-              <span>{isCmsValFs ? "Resolutions & Table" : "Overview"}</span>
+              <span>{isCms ? "Resolutions & Table" : "Overview"}</span>
             </button>
 
             <button
@@ -135,9 +141,9 @@ function DashboardContent() {
         {/* Tab 1: Primary Workspace Area */}
         {activeTab === "workspace" && (
           <>
-            {isCmsValFs ? (
+            {isCms ? (
               <>
-                {/* CMS VAL&FS has active form + 8-record paginated resolution table */}
+                {/* CMS has active form + 8-record paginated resolution table */}
                 <ResolutionForm project={currentProject} onRecordCreated={fetchTasks} />
                 <ResolutionTable
                   currentProject={currentProject}
@@ -163,7 +169,7 @@ function DashboardContent() {
                 />
               </>
             ) : (
-              /* CIAS and ASR modules: Clean placeholder awaiting custom schema discussion */
+              /* Other modules (CDR, IPDR, CIAS, MCX, TSOC, ASR): Clean placeholder awaiting custom schema discussion */
               <div className="bg-white dark:bg-slate-900/90 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-card p-8 text-center">
                 <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center mx-auto mb-3">
                   <Clock className="w-6 h-6" />

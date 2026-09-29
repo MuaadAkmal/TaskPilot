@@ -1,220 +1,257 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { taskStore } from "@/lib/store";
-import { ProjectCode } from "@/lib/project-config";
+import { taskStore, MockTask } from "@/lib/store";
+import { calculateDowntimeMinutes } from "@/lib/utils";
 import { sendResolutionEmailAlert } from "@/lib/resend";
 
-export async function GET(req: NextRequest) {
+export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const project = (searchParams.get("project") as ProjectCode) || "CMS_VAL_FS";
+    const rawProject = searchParams.get("project") || "CMS";
+    const project = rawProject === "CMS_VAL_FS" ? "CMS" : rawProject;
+
     const page = parseInt(searchParams.get("page") || "1", 10);
     const pageSize = parseInt(searchParams.get("pageSize") || "8", 10);
-    const search = searchParams.get("search") || "";
-    const tsp = searchParams.get("tsp") || "ALL";
-    const lsa = searchParams.get("lsa") || "ALL";
+    const search = searchParams.get("search")?.toLowerCase();
+    const tsp = searchParams.get("tsp");
+    const lsa = searchParams.get("lsa");
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
     const sort = searchParams.get("sort") || "resolvedAt_desc";
 
-    // 1. Try fetching from SQLite database via Prisma
+    // Query Prisma DB first
     try {
       const whereClause: any = {
-        project: project,
+        project: { in: project === "CMS" ? ["CMS", "CMS_VAL_FS"] : [project] },
       };
 
-      if (tsp && tsp !== "ALL") {
-        whereClause.tsp = tsp;
-      }
-      if (lsa && lsa !== "ALL") {
-        whereClause.lsa = lsa;
-      }
-      if (search && search.trim()) {
-        const query = search.toLowerCase();
+      if (tsp && tsp !== "ALL") whereClause.tsp = tsp;
+      if (lsa && lsa !== "ALL") whereClause.lsa = lsa;
+
+      if (search) {
         whereClause.OR = [
-          { problemDescription: { contains: query } },
-          { solution: { contains: query } },
-          { remarks: { contains: query } },
-          { raisedByName: { contains: query } },
-          { tsp: { contains: query } },
-          { lsa: { contains: query } },
+          { problemDescription: { contains: search } },
+          { solution: { contains: search } },
+          { remarks: { contains: search } },
+          { raisedByName: { contains: search } },
         ];
       }
 
-      // Determine orderBy
+      if (startDate || endDate) {
+        whereClause.resolvedAt = {};
+        if (startDate) whereClause.resolvedAt.gte = new Date(startDate);
+        if (endDate) whereClause.resolvedAt.lte = new Date(endDate);
+      }
+
       let orderBy: any = { resolvedAt: "desc" };
       if (sort === "resolvedAt_asc") orderBy = { resolvedAt: "asc" };
-      else if (sort === "downtime_desc") orderBy = { downtimeMinutes: "desc" };
-      else if (sort === "downtime_asc") orderBy = { downtimeMinutes: "asc" };
-      else if (sort === "tsp_asc") orderBy = { tsp: "asc" };
+      if (sort === "downtime_desc") orderBy = { downtimeMinutes: "desc" };
+      if (sort === "downtime_asc") orderBy = { downtimeMinutes: "asc" };
 
-      const total = await prisma.taskResolution.count({ where: whereClause });
-      const tasks = await prisma.taskResolution.findMany({
-        where: whereClause,
-        orderBy,
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-      });
+      const [total, dbTasks, allMatching] = await Promise.all([
+        prisma.taskResolution.count({ where: whereClause }),
+        prisma.taskResolution.findMany({
+          where: whereClause,
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+          orderBy,
+        }),
+        prisma.taskResolution.findMany({
+          where: whereClause,
+          orderBy,
+        }),
+      ]);
 
-      const allMatchingTasks = await prisma.taskResolution.findMany({
-        where: whereClause,
-        orderBy,
-      });
+      if (total > 0 || dbTasks.length > 0) {
+        const formattedTasks: MockTask[] = dbTasks.map((t) => ({
+          id: t.id.toString(),
+          project: t.project as any,
+          tsp: t.tsp,
+          lsa: t.lsa,
+          status: t.status as any,
+          raisedByName: t.raisedByName,
+          problemDescription: t.problemDescription,
+          solution: t.solution,
+          remarks: t.remarks || null,
+          createdAt: t.createdAt.toISOString(),
+          resolvedAt: t.resolvedAt?.toISOString() || null,
+          downtimeMinutes: t.downtimeMinutes || 0,
+          docLinks: [],
+          updatedAt: t.updatedAt.toISOString(),
+        }));
 
-      return NextResponse.json({
-        tasks,
-        allMatchingTasks,
-        total,
-        page,
-        pageSize,
-        totalPages: Math.ceil(total / pageSize) || 1,
-        source: "sqlite",
-      });
-    } catch (dbErr) {
-      console.warn("Prisma query fallback to in-memory store:", dbErr);
+        const formattedAll: MockTask[] = allMatching.map((t) => ({
+          id: t.id.toString(),
+          project: t.project as any,
+          tsp: t.tsp,
+          lsa: t.lsa,
+          status: t.status as any,
+          raisedByName: t.raisedByName,
+          problemDescription: t.problemDescription,
+          solution: t.solution,
+          remarks: t.remarks || null,
+          createdAt: t.createdAt.toISOString(),
+          resolvedAt: t.resolvedAt?.toISOString() || null,
+          downtimeMinutes: t.downtimeMinutes || 0,
+          docLinks: [],
+          updatedAt: t.updatedAt.toISOString(),
+        }));
+
+        return NextResponse.json({
+          tasks: formattedTasks,
+          allMatchingTasks: formattedAll,
+          total,
+          page,
+          pageSize,
+          totalPages: Math.ceil(total / pageSize),
+        });
+      }
+    } catch (dbError) {
+      console.warn("DB query failed, falling back to taskStore:", dbError);
     }
 
-    // 2. Fallback to in-memory store if DB query fails
-    const all = taskStore.getAll(project);
-    return NextResponse.json({
-      tasks: all.slice(0, 8),
-      allMatchingTasks: all,
-      total: all.length,
-      page: 1,
-      pageSize: 8,
-      totalPages: Math.ceil(all.length / 8) || 1,
-      source: "memory_store",
+    // Fallback store
+    let filtered = taskStore.getAll().filter((t) => {
+      if (project === "CMS") {
+        return t.project === "CMS" || t.project === ("CMS_VAL_FS" as any);
+      }
+      return t.project === project;
     });
-  } catch (error) {
-    console.error("GET /api/tasks error:", error);
-    return NextResponse.json({ error: "Failed to fetch tasks" }, { status: 500 });
+
+    if (tsp && tsp !== "ALL") filtered = filtered.filter((t) => t.tsp === tsp);
+    if (lsa && lsa !== "ALL") filtered = filtered.filter((t) => t.lsa === lsa);
+    if (startDate) filtered = filtered.filter((t) => t.resolvedAt && t.resolvedAt >= startDate);
+    if (endDate) filtered = filtered.filter((t) => t.resolvedAt && t.resolvedAt <= endDate);
+    if (search) {
+      filtered = filtered.filter(
+        (t) =>
+          t.problemDescription.toLowerCase().includes(search) ||
+          t.solution.toLowerCase().includes(search) ||
+          t.raisedByName.toLowerCase().includes(search) ||
+          (t.remarks && t.remarks.toLowerCase().includes(search))
+      );
+    }
+
+    if (sort === "resolvedAt_desc") {
+      filtered.sort((a, b) => new Date(b.resolvedAt || 0).getTime() - new Date(a.resolvedAt || 0).getTime());
+    } else if (sort === "resolvedAt_asc") {
+      filtered.sort((a, b) => new Date(a.resolvedAt || 0).getTime() - new Date(b.resolvedAt || 0).getTime());
+    } else if (sort === "downtime_desc") {
+      filtered.sort((a, b) => (b.downtimeMinutes || 0) - (a.downtimeMinutes || 0));
+    } else if (sort === "downtime_asc") {
+      filtered.sort((a, b) => (a.downtimeMinutes || 0) - (b.downtimeMinutes || 0));
+    }
+
+    const total = filtered.length;
+    const startIndex = (page - 1) * pageSize;
+    const paginated = filtered.slice(startIndex, startIndex + pageSize);
+
+    return NextResponse.json({
+      tasks: paginated,
+      allMatchingTasks: filtered,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || "Failed to fetch tasks" }, { status: 500 });
   }
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
     const body = await req.json();
     const {
-      project = "CMS_VAL_FS",
+      project = "CMS",
       tsp,
       lsa,
       status = "RESOLVED",
+      raisedByName = "NOC Team",
       problemDescription,
       solution,
       remarks,
-      raisedByName = "NOC Team",
       createdAt,
       resolvedAt,
     } = body;
 
-    if (!problemDescription || !solution) {
+    if (!tsp || !lsa || !problemDescription || !solution) {
       return NextResponse.json(
-        { error: "Problem description and solution are required" },
+        { error: "Missing required fields: tsp, lsa, problemDescription, solution." },
         { status: 400 }
       );
     }
 
-    // Calculate downtime duration in minutes
-    let downtimeMinutes = 0;
-    const start = createdAt ? new Date(createdAt) : new Date(Date.now() - 45 * 60 * 1000);
-    const end = resolvedAt ? new Date(resolvedAt) : new Date();
-    if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
-      downtimeMinutes = Math.max(0, Math.round((end.getTime() - start.getTime()) / (1000 * 60)));
-    }
+    const createdDate = createdAt ? new Date(createdAt) : new Date();
+    const resolvedDate = resolvedAt ? new Date(resolvedAt) : new Date();
+    const downtimeMinutes = calculateDowntimeMinutes(
+      createdDate.toISOString(),
+      resolvedDate.toISOString()
+    );
 
-    let newTask: any = null;
+    let createdTask: MockTask;
 
-    // 1. Try persisting to SQLite database via Prisma
     try {
-      newTask = await prisma.taskResolution.create({
+      const dbTask = await prisma.taskResolution.create({
         data: {
-          project,
-          tsp: tsp || "Airtel",
-          lsa: lsa || "Delhi",
+          project: project === "CMS_VAL_FS" ? "CMS" : project,
+          tsp,
+          lsa,
           status,
-          problemDescription,
-          solution,
-          remarks: remarks || "",
-          downtimeMinutes,
           raisedByName,
-          createdAt: start,
-          resolvedAt: end,
-        },
-      });
-    } catch (dbErr) {
-      console.warn("Prisma write fallback to in-memory store:", dbErr);
-      newTask = taskStore.create({
-        project,
-        tsp: tsp || "Airtel",
-        lsa: lsa || "Delhi",
-        status,
-        problemDescription,
-        solution,
-        remarks: remarks || "",
-        downtimeMinutes,
-        raisedByName,
-        docLinks: [],
-        createdAt: start.toISOString(),
-        resolvedAt: end.toISOString(),
-      });
-    }
-
-    // 2. Dispatch async email notification
-    sendResolutionEmailAlert({
-      task: {
-        id: newTask.id.toString(),
-        project: newTask.project,
-        tsp: newTask.tsp,
-        lsa: newTask.lsa,
-        status: newTask.status,
-        problemDescription: newTask.problemDescription,
-        solution: newTask.solution,
-        remarks: newTask.remarks,
-        downtimeMinutes: newTask.downtimeMinutes,
-        raisedByName: newTask.raisedByName,
-      },
-    }).catch((err) => console.error("Email notification dispatch error:", err));
-
-    return NextResponse.json({ success: true, task: newTask }, { status: 201 });
-  } catch (error) {
-    console.error("POST /api/tasks error:", error);
-    return NextResponse.json({ error: "Failed to create task" }, { status: 500 });
-  }
-}
-
-export async function PUT(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const { id, status, problemDescription, solution, remarks } = body;
-
-    if (!id) {
-      return NextResponse.json({ error: "Task ID is required for update" }, { status: 400 });
-    }
-
-    try {
-      const updated = await prisma.taskResolution.update({
-        where: { id: Number(id) },
-        data: {
-          status,
           problemDescription,
           solution,
           remarks,
-          updatedAt: new Date(),
+          downtimeMinutes,
+          createdAt: createdDate,
+          resolvedAt: resolvedDate,
         },
       });
-      return NextResponse.json({ success: true, task: updated });
-    } catch (dbErr) {
-      const updated = taskStore.update(id.toString(), {
+
+      createdTask = {
+        id: dbTask.id.toString(),
+        project: dbTask.project as any,
+        tsp: dbTask.tsp,
+        lsa: dbTask.lsa,
+        status: dbTask.status as any,
+        raisedByName: dbTask.raisedByName,
+        problemDescription: dbTask.problemDescription,
+        solution: dbTask.solution,
+        remarks: dbTask.remarks || null,
+        createdAt: dbTask.createdAt.toISOString(),
+        resolvedAt: dbTask.resolvedAt?.toISOString() || null,
+        downtimeMinutes: dbTask.downtimeMinutes || 0,
+        docLinks: [],
+        updatedAt: dbTask.updatedAt.toISOString(),
+      };
+    } catch (dbError) {
+      console.warn("DB insert failed, writing to fallback memory store:", dbError);
+      createdTask = taskStore.create({
+        project,
+        tsp,
+        lsa,
         status,
+        raisedByName,
         problemDescription,
         solution,
-        remarks,
+        remarks: remarks || null,
+        createdAt: createdDate.toISOString(),
+        resolvedAt: resolvedDate.toISOString(),
+        downtimeMinutes,
+        docLinks: [],
       });
-      if (!updated) {
-        return NextResponse.json({ error: "Task not found" }, { status: 404 });
-      }
-      return NextResponse.json({ success: true, task: updated });
     }
-  } catch (error) {
-    console.error("PUT /api/tasks error:", error);
-    return NextResponse.json({ error: "Failed to update task" }, { status: 500 });
+
+    try {
+      sendResolutionEmailAlert({ task: createdTask }).catch((err) => {
+        console.warn("Async email alert dispatch error:", err);
+      });
+    } catch (e) {
+      // Non-blocking
+    }
+
+    return NextResponse.json({ task: createdTask }, { status: 201 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || "Failed to create task" }, { status: 500 });
   }
 }

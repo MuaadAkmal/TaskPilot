@@ -8,8 +8,8 @@ let mockUsers = [
     clerkId: "clerk_noc_1",
     email: "sarah.jenkins@telecom.net",
     name: "Sarah Jenkins",
-    title: "Lead Security & NOC Architect",
-    projects: JSON.stringify(["CMS_VAL_FS", "CIAS"]),
+    title: "Lead Telecom & NOC Architect",
+    projects: JSON.stringify(["CMS", "CIAS", "TSOC"]),
     role: "TEAM_LEAD",
     receiveEmailAlerts: true,
     alertOnProjects: "ALL",
@@ -19,8 +19,8 @@ let mockUsers = [
     clerkId: "clerk_noc_2",
     email: "alex.kumar@telecom.net",
     name: "Alex Kumar",
-    title: "Senior Security Infrastructure Engineer",
-    projects: JSON.stringify(["CIAS", "ASR"]),
+    title: "Security & CIAS Infrastructure Lead",
+    projects: JSON.stringify(["CIAS", "TSOC"]),
     role: "ENGINEER",
     receiveEmailAlerts: true,
     alertOnProjects: "ALL",
@@ -30,7 +30,7 @@ let mockUsers = [
     clerkId: "clerk_noc_3",
     email: "priya.nair@telecom.net",
     name: "Priya Nair",
-    title: "Speech Processing & ASR Pipeline Lead",
+    title: "Automatic Speech Recognition (ASR) Lead",
     projects: JSON.stringify(["ASR"]),
     role: "TEAM_LEAD",
     receiveEmailAlerts: false,
@@ -41,22 +41,33 @@ let mockUsers = [
     clerkId: "clerk_noc_4",
     email: "marcus.vance@telecom.net",
     name: "Marcus Vance",
-    title: "Telecom Circle Operations Specialist",
-    projects: JSON.stringify(["CMS_VAL_FS"]),
+    title: "CDR & IPDR Mediation Specialist",
+    projects: JSON.stringify(["CMS", "CDR", "IPDR"]),
     role: "ENGINEER",
     receiveEmailAlerts: true,
-    alertOnProjects: JSON.stringify(["CMS_VAL_FS"]),
+    alertOnProjects: JSON.stringify(["CMS", "CDR", "IPDR"]),
   },
   {
     id: "usr-5",
     clerkId: "clerk_noc_5",
     email: "elena.rostova@telecom.net",
     name: "Elena Rostova",
-    title: "CIAS Threat Intelligence & WAF Engineer",
-    projects: JSON.stringify(["CIAS"]),
+    title: "Mission Critical Push-to-Talk (MCX) Specialist",
+    projects: JSON.stringify(["MCX", "TSOC"]),
     role: "ENGINEER",
     receiveEmailAlerts: true,
-    alertOnProjects: JSON.stringify(["CIAS"]),
+    alertOnProjects: JSON.stringify(["MCX"]),
+  },
+  {
+    id: "usr-6",
+    clerkId: "clerk_noc_6",
+    email: "tariq.mansoor@telecom.net",
+    name: "Tariq Mansoor",
+    title: "Telecom Security Operations Center (TSOC) Lead",
+    projects: JSON.stringify(["TSOC", "CIAS"]),
+    role: "TEAM_LEAD",
+    receiveEmailAlerts: true,
+    alertOnProjects: JSON.stringify(["TSOC"]),
   },
 ];
 
@@ -64,7 +75,8 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const email = searchParams.get("email");
-    const project = searchParams.get("project");
+    const rawProject = searchParams.get("project");
+    const project = rawProject === "CMS_VAL_FS" ? "CMS" : rawProject;
 
     try {
       if (email) {
@@ -83,7 +95,7 @@ export async function GET(req: Request) {
           const filtered = users.filter((u) => {
             try {
               const assigned = JSON.parse(u.projects || "[]");
-              return assigned.includes(project);
+              return assigned.includes(project) || (project === "CMS" && assigned.includes("CMS_VAL_FS"));
             } catch {
               return false;
             }
@@ -105,7 +117,7 @@ export async function GET(req: Request) {
       const filtered = mockUsers.filter((u) => {
         try {
           const assigned = JSON.parse(u.projects || "[]");
-          return assigned.includes(project);
+          return assigned.includes(project) || (project === "CMS" && assigned.includes("CMS_VAL_FS"));
         } catch {
           return false;
         }

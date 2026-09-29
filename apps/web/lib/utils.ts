@@ -19,3 +19,15 @@ export function formatDowntime(minutes: number | null | undefined): string {
   }
   return `${hours}h ${remainingMins}m`;
 }
+
+export function calculateDowntimeMinutes(startIso?: string | null, endIso?: string | null): number {
+  if (!startIso || !endIso) return 0;
+  try {
+    const start = new Date(startIso).getTime();
+    const end = new Date(endIso).getTime();
+    if (isNaN(start) || isNaN(end) || end < start) return 0;
+    return Math.round((end - start) / (1000 * 60));
+  } catch {
+    return 0;
+  }
+}
