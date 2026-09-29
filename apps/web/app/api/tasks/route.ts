@@ -1,89 +1,92 @@
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { taskStore } from "@/lib/store";
 import { ProjectCode } from "@/lib/project-config";
 import { sendResolutionEmailAlert } from "@/lib/resend";
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const project = (searchParams.get("project") as ProjectCode) || "CMS_VAL_FS";
-  const tsp = searchParams.get("tsp");
-  const lsa = searchParams.get("lsa");
-  const search = searchParams.get("search")?.toLowerCase().trim();
-  const startDate = searchParams.get("startDate");
-  const endDate = searchParams.get("endDate");
-  const sort = searchParams.get("sort") || "resolvedAt_desc";
-  const page = parseInt(searchParams.get("page") || "1", 10);
-  const pageSize = parseInt(searchParams.get("pageSize") || "8", 10);
+  try {
+    const { searchParams } = new URL(req.url);
+    const project = (searchParams.get("project") as ProjectCode) || "CMS_VAL_FS";
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const pageSize = parseInt(searchParams.get("pageSize") || "8", 10);
+    const search = searchParams.get("search") || "";
+    const tsp = searchParams.get("tsp") || "ALL";
+    const lsa = searchParams.get("lsa") || "ALL";
+    const sort = searchParams.get("sort") || "resolvedAt_desc";
 
-  let tasks = taskStore.getAll(project);
+    // 1. Try fetching from SQLite database via Prisma
+    try {
+      const whereClause: any = {
+        project: project,
+      };
 
-  // Filter by TSP
-  if (tsp && tsp !== "ALL") {
-    tasks = tasks.filter((t) => t.tsp === tsp);
-  }
+      if (tsp && tsp !== "ALL") {
+        whereClause.tsp = tsp;
+      }
+      if (lsa && lsa !== "ALL") {
+        whereClause.lsa = lsa;
+      }
+      if (search && search.trim()) {
+        const query = search.toLowerCase();
+        whereClause.OR = [
+          { problemDescription: { contains: query } },
+          { solution: { contains: query } },
+          { remarks: { contains: query } },
+          { raisedByName: { contains: query } },
+          { tsp: { contains: query } },
+          { lsa: { contains: query } },
+        ];
+      }
 
-  // Filter by LSA
-  if (lsa && lsa !== "ALL") {
-    tasks = tasks.filter((t) => t.lsa === lsa);
-  }
+      // Determine orderBy
+      let orderBy: any = { resolvedAt: "desc" };
+      if (sort === "resolvedAt_asc") orderBy = { resolvedAt: "asc" };
+      else if (sort === "downtime_desc") orderBy = { downtimeMinutes: "desc" };
+      else if (sort === "downtime_asc") orderBy = { downtimeMinutes: "asc" };
+      else if (sort === "tsp_asc") orderBy = { tsp: "asc" };
 
-  // Filter by search query (searches problemDescription, solution, remarks, raisedByName, tsp, lsa)
-  if (search) {
-    tasks = tasks.filter(
-      (t) =>
-        t.problemDescription.toLowerCase().includes(search) ||
-        t.solution.toLowerCase().includes(search) ||
-        (t.remarks && t.remarks.toLowerCase().includes(search)) ||
-        t.raisedByName.toLowerCase().includes(search) ||
-        t.tsp.toLowerCase().includes(search) ||
-        t.lsa.toLowerCase().includes(search) ||
-        t.id.toLowerCase().includes(search)
-    );
-  }
+      const total = await prisma.taskResolution.count({ where: whereClause });
+      const tasks = await prisma.taskResolution.findMany({
+        where: whereClause,
+        orderBy,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      });
 
-  // Filter by Date Range
-  if (startDate) {
-    const start = new Date(startDate).getTime();
-    tasks = tasks.filter((t) => new Date(t.createdAt).getTime() >= start);
-  }
-  if (endDate) {
-    const end = new Date(endDate).getTime();
-    tasks = tasks.filter((t) => new Date(t.createdAt).getTime() <= end);
-  }
+      const allMatchingTasks = await prisma.taskResolution.findMany({
+        where: whereClause,
+        orderBy,
+      });
 
-  // Sorting
-  tasks.sort((a, b) => {
-    switch (sort) {
-      case "resolvedAt_asc":
-        return new Date(a.resolvedAt || a.createdAt).getTime() - new Date(b.resolvedAt || b.createdAt).getTime();
-      case "resolvedAt_desc":
-        return new Date(b.resolvedAt || b.createdAt).getTime() - new Date(a.resolvedAt || a.createdAt).getTime();
-      case "downtime_desc":
-        return (b.downtimeMinutes || 0) - (a.downtimeMinutes || 0);
-      case "downtime_asc":
-        return (a.downtimeMinutes || 0) - (b.downtimeMinutes || 0);
-      case "tsp_asc":
-        return a.tsp.localeCompare(b.tsp);
-      case "lsa_asc":
-        return a.lsa.localeCompare(b.lsa);
-      default:
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      return NextResponse.json({
+        tasks,
+        allMatchingTasks,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize) || 1,
+        source: "sqlite",
+      });
+    } catch (dbErr) {
+      console.warn("Prisma query fallback to in-memory store:", dbErr);
     }
-  });
 
-  const total = tasks.length;
-  const totalPages = Math.ceil(total / pageSize) || 1;
-  const startIndex = (page - 1) * pageSize;
-  const paginatedTasks = tasks.slice(startIndex, startIndex + pageSize);
-
-  return NextResponse.json({
-    tasks: paginatedTasks,
-    allMatchingTasks: tasks, // used for full CSV/PDF export
-    total,
-    page,
-    totalPages,
-    pageSize,
-  });
+    // 2. Fallback to in-memory store if DB query fails
+    const all = taskStore.getAll(project);
+    return NextResponse.json({
+      tasks: all.slice(0, 8),
+      allMatchingTasks: all,
+      total: all.length,
+      page: 1,
+      pageSize: 8,
+      totalPages: Math.ceil(all.length / 8) || 1,
+      source: "memory_store",
+    });
+  } catch (error) {
+    console.error("GET /api/tasks error:", error);
+    return NextResponse.json({ error: "Failed to fetch tasks" }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -97,89 +100,121 @@ export async function POST(req: NextRequest) {
       problemDescription,
       solution,
       remarks,
-      raisedByName = "Operations Engineer",
+      raisedByName = "NOC Team",
       createdAt,
       resolvedAt,
     } = body;
 
-    if (!problemDescription || !solution || !tsp || !lsa) {
+    if (!problemDescription || !solution) {
       return NextResponse.json(
-        { error: "Missing required fields (TSP, LSA, Problem Description, Solution)" },
+        { error: "Problem description and solution are required" },
         { status: 400 }
       );
     }
 
-    const cTime = createdAt ? new Date(createdAt).toISOString() : new Date().toISOString();
-    const rTime = resolvedAt ? new Date(resolvedAt).toISOString() : new Date().toISOString();
-
-    // Compute downtime in minutes
-    let downtimeMinutes: number | null = null;
-    if (cTime && rTime) {
-      const diffMs = new Date(rTime).getTime() - new Date(cTime).getTime();
-      downtimeMinutes = Math.max(0, Math.round(diffMs / (1000 * 60)));
+    // Calculate downtime duration in minutes
+    let downtimeMinutes = 0;
+    const start = createdAt ? new Date(createdAt) : new Date(Date.now() - 45 * 60 * 1000);
+    const end = resolvedAt ? new Date(resolvedAt) : new Date();
+    if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+      downtimeMinutes = Math.max(0, Math.round((end.getTime() - start.getTime()) / (1000 * 60)));
     }
 
-    const newTask = taskStore.create({
-      project: project as ProjectCode,
-      tsp,
-      lsa,
-      status,
-      problemDescription,
-      solution,
-      remarks: remarks || null,
-      raisedByName,
-      createdAt: cTime,
-      resolvedAt: rTime,
-      downtimeMinutes,
-      docLinks: [],
-    });
+    let newTask: any = null;
 
-    // Asynchronously trigger Resend Email alert
+    // 1. Try persisting to SQLite database via Prisma
+    try {
+      newTask = await prisma.taskResolution.create({
+        data: {
+          project,
+          tsp: tsp || "Airtel",
+          lsa: lsa || "Delhi",
+          status,
+          problemDescription,
+          solution,
+          remarks: remarks || "",
+          downtimeMinutes,
+          raisedByName,
+          createdAt: start,
+          resolvedAt: end,
+        },
+      });
+    } catch (dbErr) {
+      console.warn("Prisma write fallback to in-memory store:", dbErr);
+      newTask = taskStore.create({
+        project,
+        tsp: tsp || "Airtel",
+        lsa: lsa || "Delhi",
+        status,
+        problemDescription,
+        solution,
+        remarks: remarks || "",
+        downtimeMinutes,
+        raisedByName,
+        docLinks: [],
+        createdAt: start.toISOString(),
+        resolvedAt: end.toISOString(),
+      });
+    }
+
+    // 2. Dispatch async email notification
     sendResolutionEmailAlert({
       task: {
-        id: newTask.id,
+        id: newTask.id.toString(),
         project: newTask.project,
         tsp: newTask.tsp,
         lsa: newTask.lsa,
+        status: newTask.status,
         problemDescription: newTask.problemDescription,
         solution: newTask.solution,
         remarks: newTask.remarks,
-        raisedByName: newTask.raisedByName,
         downtimeMinutes: newTask.downtimeMinutes,
-        resolvedAt: newTask.resolvedAt,
+        raisedByName: newTask.raisedByName,
       },
-    }).catch((err) => console.error("Email alert background dispatch failed:", err));
+    }).catch((err) => console.error("Email notification dispatch error:", err));
 
     return NextResponse.json({ success: true, task: newTask }, { status: 201 });
   } catch (error) {
     console.error("POST /api/tasks error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to create task" }, { status: 500 });
   }
 }
 
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
-    const { id, ...updates } = body;
+    const { id, status, problemDescription, solution, remarks } = body;
 
     if (!id) {
-      return NextResponse.json({ error: "Task ID is required" }, { status: 400 });
+      return NextResponse.json({ error: "Task ID is required for update" }, { status: 400 });
     }
 
-    // Recompute downtime if timestamps changed
-    if (updates.createdAt && updates.resolvedAt) {
-      const diffMs = new Date(updates.resolvedAt).getTime() - new Date(updates.createdAt).getTime();
-      updates.downtimeMinutes = Math.max(0, Math.round(diffMs / (1000 * 60)));
+    try {
+      const updated = await prisma.taskResolution.update({
+        where: { id: Number(id) },
+        data: {
+          status,
+          problemDescription,
+          solution,
+          remarks,
+          updatedAt: new Date(),
+        },
+      });
+      return NextResponse.json({ success: true, task: updated });
+    } catch (dbErr) {
+      const updated = taskStore.update(id.toString(), {
+        status,
+        problemDescription,
+        solution,
+        remarks,
+      });
+      if (!updated) {
+        return NextResponse.json({ error: "Task not found" }, { status: 404 });
+      }
+      return NextResponse.json({ success: true, task: updated });
     }
-
-    const updatedTask = taskStore.update(id, updates);
-    if (!updatedTask) {
-      return NextResponse.json({ error: "Task not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({ success: true, task: updatedTask });
   } catch (error) {
     console.error("PUT /api/tasks error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to update task" }, { status: 500 });
   }
 }

@@ -1,93 +1,66 @@
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 generator client {
   provider = "prisma-client-js"
 }
 
-enum ProjectCode {
-  CMS_VAL_FS
-  ASR
-  CIAS
-  OTHER
-}
-
-enum Status {
-  RESOLVED
-  IN_PROGRESS
-  PENDING_VERIFICATION
-  CLOSED
-}
-
-enum Role {
-  ENGINEER
-  TEAM_LEAD
-  ADMIN
-}
-
-// User Profile mapped to Clerk Auth ID
 model User {
-  id             String        @id @default(cuid())
-  clerkId        String        @unique
-  email          String        @unique
-  fullName       String
-  title          String        @default("NOC Engineer")
-  role           Role          @default(ENGINEER)
-  projects       ProjectCode[] @default([CMS_VAL_FS])
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id        String   @id @default(uuid())
+  clerkId   String   @unique
+  email     String   @unique
+  name      String?
+  title     String?  // e.g. "Senior NOC Engineer", "L2 Tech Lead"
+  projects  String   // JSON stringified array of assigned project codes ["CMS_VAL_FS", "ASR", "CIAS"]
+  role      String   @default("ENGINEER") // ADMIN, TEAM_LEAD, ENGINEER
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  tasksRaised    TaskResolution[] @relation("TasksRaised")
-  tasksEdited    TaskResolution[] @relation("TasksEdited")
+  createdTasks TaskResolution[] @relation("TaskCreator")
+
+  @@index([email])
 }
 
-// Core Task & Resolution Model (Scoped to Project)
 model TaskResolution {
-  id                 String             @id @default(cuid())
-  project            ProjectCode        @default(CMS_VAL_FS)
+  id                 Int      @id @default(autoincrement())
+  project            String   // "CMS_VAL_FS", "ASR", "CIAS", etc.
+  tsp                String   // TSP for CMS VAL&FS or Primary Category for other projects
+  lsa                String   // LSA for CMS VAL&FS or Secondary Category for other projects
+  status             String   @default("RESOLVED") // RESOLVED, IN_PROGRESS, PENDING_VERIFICATION, CLOSED
+  problemDescription String
+  solution           String
+  remarks            String?
+  downtimeMinutes    Int?     @default(0)
+  raisedByName       String   @default("NOC Team")
   
-  // Specific to CMS VAL&FS
-  tsp                String?            // Strict: Airtel, Jio, Vodafone Idea (Vi), BSNL, MTNL, Tata Tele
-  lsa                String?            // 22 DOT Telecom Circles
-  status             Status             @default(RESOLVED)
+  // Optional relations and metadata
+  createdById        String?
+  createdBy          User?    @relation("TaskCreator", fields: [createdById], references: [id])
   
-  problemDescription String             @db.Text
-  solution           String             @db.Text
-  remarks            String?            @db.Text
-  
-  // Timestamps & Metrics
-  createdAt          DateTime           @default(now())
+  createdAt          DateTime @default(now())
   resolvedAt         DateTime?
-  downtimeMinutes    Int?               // Computed duration in minutes
-  
-  // Attribution
-  raisedByName       String             @default("Operations Engineer")
-  raisedById         String?
-  raisedBy           User?              @relation("TasksRaised", fields: [raisedById], references: [id])
-  lastEditedById     String?
-  lastEditedBy       User?              @relation("TasksEdited", fields: [lastEditedById], references: [id])
-  updatedAt          DateTime           @updatedAt
-  
-  // Attached Documentation / Links
-  docLinks           String[]           @default([])
-
-  @@index([project, tsp, lsa])
-  @@index([status])
-  @@index([createdAt])
-}
-
-// Project Documentation & Knowledge Library (Ingested by Agent)
-model ProjectDocument {
-  id          String      @id @default(cuid())
-  project     ProjectCode
-  title       String
-  url         String?
-  content     String      @db.Text
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  updatedAt          DateTime @updatedAt
 
   @@index([project])
+  @@index([tsp])
+  @@index([lsa])
+  @@index([status])
+  @@index([resolvedAt])
+}
+
+model ProjectDocument {
+  id         String   @id @default(uuid())
+  project    String   // Project association
+  title      String
+  category   String   // "SOP", "ARCHITECTURE", "TROUBLESHOOTING_GUIDE", "CHANGELOG"
+  content    String
+  fileUrl    String?
+  version    String   @default("1.0.0")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([project])
+  @@index([category])
 }

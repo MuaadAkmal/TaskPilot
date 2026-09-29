@@ -32,7 +32,7 @@ const isPublicRoute = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_m
 ]);
 const __TURBOPACK__default__export__ = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$clerk$2f$nextjs$2f$dist$2f$esm$2f$server$2f$clerkMiddleware$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__["clerkMiddleware"])(async (auth, request)=>{
     // If Clerk keys are placeholder/dev mode, allow transparent bypass
-    const publishableKey = ("TURBOPACK compile-time value", "pk_test_placeholder");
+    const publishableKey = ("TURBOPACK compile-time value", "pk_test_c3VtbWFyeS10ZXJtaXRlLTE0LmNsZXJrLmFjY291bnRzLmRldiQ");
     if (!publishableKey || publishableKey.includes("placeholder") || publishableKey.startsWith("pk_test_placeholder")) {
         return;
     }

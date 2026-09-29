@@ -1,109 +1,109 @@
+import { Resend } from "resend";
+import { ProjectCode, PROJECTS } from "./project-config";
+
+const resendApiKey = process.env.RESEND_API_KEY;
+const resend = resendApiKey && !resendApiKey.includes("placeholder") ? new Resend(resendApiKey) : null;
+
 export interface EmailAlertPayload {
   task: {
     id: string;
     project: string;
     tsp: string;
     lsa: string;
+    status?: string;
     problemDescription: string;
     solution: string;
     remarks?: string | null;
     raisedByName: string;
     downtimeMinutes?: number | null;
-    resolvedAt?: string | null;
+    resolvedAt?: string | Date | null;
   };
-  recipients?: string[];
+  teamEmails?: string[];
 }
 
-export async function sendResolutionEmailAlert(payload: EmailAlertPayload): Promise<{ success: boolean; messageId?: string; simulated?: boolean }> {
-  const apiKey = process.env.RESEND_API_KEY;
-  const { task } = payload;
+export async function sendResolutionEmailAlert({ task, teamEmails }: EmailAlertPayload) {
+  const projectMeta = PROJECTS.find((p) => p.code === (task.project as ProjectCode)) || PROJECTS[0];
+  const recipients = teamEmails && teamEmails.length > 0 ? teamEmails : ["team-alerts@taskpilot.internal"];
 
-  console.log(`[Resend Email Service] Dispatching alert for Task #${task.id} (${task.project}) - TSP: ${task.tsp}, LSA: ${task.lsa}`);
+  const emailHtml = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+      <div style="background-color: #4f46e5; padding: 24px; color: #ffffff;">
+        <h1 style="margin: 0; font-size: 20px; font-weight: 700;">TaskPilot Incident Resolution Alert</h1>
+        <p style="margin: 6px 0 0 0; font-size: 13px; color: #e0e7ff;">New resolved entry recorded for <strong>${projectMeta.name}</strong></p>
+      </div>
+      
+      <div style="padding: 24px; color: #1e293b; font-size: 14px; line-height: 1.5;">
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+          <tr>
+            <td style="padding: 6px 0; color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: 600;">Ticket ID</td>
+            <td style="padding: 6px 0; font-weight: 700; color: #4f46e5;">#${task.id}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: 600;">${projectMeta.fields.primaryFieldLabel}</td>
+            <td style="padding: 6px 0; font-weight: 600;">${task.tsp}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: 600;">${projectMeta.fields.secondaryFieldLabel}</td>
+            <td style="padding: 6px 0; font-weight: 600;">${task.lsa}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: 600;">Raised By</td>
+            <td style="padding: 6px 0;">${task.raisedByName}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: 600;">Downtime Duration</td>
+            <td style="padding: 6px 0; font-weight: 600; color: #b45309;">${task.downtimeMinutes ? `${task.downtimeMinutes} mins` : "N/A"}</td>
+          </tr>
+        </table>
 
-  if (!apiKey || apiKey.includes("placeholder")) {
-    console.log(`[Resend Email Service (Dev/Mock)] Email successfully simulated to team members for Task #${task.id}`);
-    return {
-      success: true,
-      simulated: true,
-      messageId: `sim_${Date.now()}`,
-    };
+        <div style="background-color: #f8fafc; border-left: 4px solid #6366f1; padding: 14px; margin-bottom: 16px; border-radius: 4px;">
+          <h3 style="margin: 0 0 6px 0; font-size: 13px; font-weight: 700; color: #334155; text-transform: uppercase;">Problem Description</h3>
+          <p style="margin: 0; color: #0f172a;">${task.problemDescription}</p>
+        </div>
+
+        <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 14px; margin-bottom: 16px; border-radius: 4px;">
+          <h3 style="margin: 0 0 6px 0; font-size: 13px; font-weight: 700; color: #065f46; text-transform: uppercase;">Verified Solution Applied</h3>
+          <p style="margin: 0; color: #064e3b; font-family: monospace;">${task.solution}</p>
+        </div>
+
+        ${
+          task.remarks
+            ? `<div style="background-color: #f1f5f9; padding: 12px; margin-bottom: 20px; border-radius: 6px;">
+                <strong style="font-size: 12px; color: #475569;">Remarks / Notes:</strong>
+                <p style="margin: 4px 0 0 0; color: #334155; font-size: 13px;">${task.remarks}</p>
+              </div>`
+            : ""
+        }
+
+        <div style="text-align: center; margin-top: 24px;">
+          <a href="http://localhost:3005?project=${task.project}" style="background-color: #4f46e5; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; display: inline-block;">
+            Open in TaskPilot Dashboard
+          </a>
+        </div>
+      </div>
+
+      <div style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 14px; text-align: center; color: #94a3b8; font-size: 11px;">
+        Sent automatically by TaskPilot Operational Hub. Project: ${projectMeta.name}
+      </div>
+    </div>
+  `;
+
+  if (!resend) {
+    console.log(`[Resend Mock Simulation] Alert queued for ${recipients.join(", ")}: Ticket #${task.id} (${task.tsp} - ${task.lsa})`);
+    return { success: true, simulated: true };
   }
 
   try {
-    const { Resend } = await import("resend");
-    const resend = new Resend(apiKey);
-
-    const fromEmail = process.env.RESEND_FROM_EMAIL || "TaskPilot Alerts <notifications@resend.dev>";
-    const toRecipients = payload.recipients && payload.recipients.length > 0 ? payload.recipients : ["team@novasmart.local"];
-
+    const fromAddress = process.env.RESEND_FROM_EMAIL || "TaskPilot Alerts <onboarding@resend.dev>";
     const response = await resend.emails.send({
-      from: fromEmail,
-      to: toRecipients,
-      subject: `[TaskPilot - ${task.project}] New Resolution: ${task.tsp} - ${task.lsa} (Ticket #${task.id})`,
-      html: `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
-          <div style="background-color: #4f46e5; padding: 16px 20px; border-radius: 8px; margin-bottom: 20px;">
-            <h2 style="color: #ffffff; margin: 0; font-size: 18px; font-weight: 700;">✈️ TaskPilot Resolution Alert</h2>
-            <p style="color: #c7d2fe; margin: 4px 0 0 0; font-size: 12px;">Project: <strong>${task.project}</strong></p>
-          </div>
-
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
-            <tr>
-              <td style="padding: 8px 12px; background-color: #f8fafc; font-weight: 600; width: 30%; border: 1px solid #e2e8f0;">Ticket ID</td>
-              <td style="padding: 8px 12px; border: 1px solid #e2e8f0; font-family: monospace; font-weight: 700; color: #4f46e5;">#${task.id}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 12px; background-color: #f8fafc; font-weight: 600; border: 1px solid #e2e8f0;">TSP & LSA</td>
-              <td style="padding: 8px 12px; border: 1px solid #e2e8f0;"><strong>${task.tsp}</strong> in <strong>${task.lsa}</strong></td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 12px; background-color: #f8fafc; font-weight: 600; border: 1px solid #e2e8f0;">Raised By</td>
-              <td style="padding: 8px 12px; border: 1px solid #e2e8f0;">${task.raisedByName}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 12px; background-color: #f8fafc; font-weight: 600; border: 1px solid #e2e8f0;">Downtime Duration</td>
-              <td style="padding: 8px 12px; border: 1px solid #e2e8f0;">${task.downtimeMinutes ? `${task.downtimeMinutes} minutes` : 'N/A'}</td>
-            </tr>
-          </table>
-
-          <div style="margin-bottom: 16px;">
-            <h3 style="font-size: 13px; text-transform: uppercase; color: #64748b; margin-bottom: 6px;">Problem Description</h3>
-            <div style="background-color: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 13px; color: #1e293b; line-height: 1.5;">
-              ${task.problemDescription}
-            </div>
-          </div>
-
-          <div style="margin-bottom: 16px;">
-            <h3 style="font-size: 13px; text-transform: uppercase; color: #059669; margin-bottom: 6px;">Verified Solution Applied</h3>
-            <div style="background-color: #ecfdf5; padding: 12px; border-radius: 6px; border: 1px solid #a7f3d0; font-size: 13px; color: #064e3b; line-height: 1.5;">
-              ${task.solution}
-            </div>
-          </div>
-
-          ${task.remarks ? `
-          <div style="margin-bottom: 20px;">
-            <h3 style="font-size: 13px; text-transform: uppercase; color: #64748b; margin-bottom: 6px;">Remarks & Next Steps</h3>
-            <div style="background-color: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 13px; color: #334155;">
-              ${task.remarks}
-            </div>
-          </div>
-          ` : ''}
-
-          <div style="text-align: center; margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
-            <a href="http://localhost:3000?project=${task.project}" style="display: inline-block; background-color: #4f46e5; color: #ffffff; padding: 10px 24px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600;">Open in TaskPilot Dashboard</a>
-          </div>
-        </div>
-      `,
+      from: fromAddress,
+      to: recipients,
+      subject: `[TaskPilot - ${projectMeta.badge}] Incident #${task.id} Resolved (${task.tsp} / ${task.lsa})`,
+      html: emailHtml,
     });
-
-    return {
-      success: true,
-      messageId: response.data?.id,
-    };
-  } catch (err) {
-    console.error("[Resend Error]:", err);
-    return {
-      success: false,
-    };
+    return { success: true, response };
+  } catch (error) {
+    console.error("[Resend Error]: Failed to send notification email", error);
+    return { success: false, error };
   }
 }
