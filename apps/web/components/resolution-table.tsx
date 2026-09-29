@@ -775,7 +775,7 @@ export function ResolutionTable({
                 </td>
               </tr>
             ) : (
-              tasks.map((task) => {
+              tasks.map((task, idx) => {
                 const isSelected = selectedRowIds.includes(task.id);
                 return (
                   <tr
@@ -795,8 +795,8 @@ export function ResolutionTable({
                       </button>
                     </td>
 
-                    <td className="py-2.5 px-3.5 font-mono text-slate-400 text-[11px]">
-                      #{task.id}
+                    <td className="py-2.5 px-3.5 font-mono text-slate-400 text-xs">
+                      #{idx + 1}
                     </td>
 
                   {isCdrOrIpdr ? (
