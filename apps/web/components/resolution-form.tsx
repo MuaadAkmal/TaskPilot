@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ProjectCode, PROJECTS, STATUS_OPTIONS } from "@/lib/project-config";
+import { ProjectCode, PROJECTS, STATUS_OPTIONS, LEA_RAISED_BY_OPTIONS } from "@/lib/project-config";
 import { Plus, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 
@@ -17,7 +17,7 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
   const [primaryFieldVal, setPrimaryFieldVal] = useState<string>(activeProjectMeta.fields.primaryOptions[0]);
   const [secondaryFieldVal, setSecondaryFieldVal] = useState<string>(activeProjectMeta.fields.secondaryOptions[0]);
   const [status, setStatus] = useState<string>("RESOLVED");
-  const [raisedByName, setRaisedByName] = useState<string>("Sarah Jenkins (NOC)");
+  const [raisedByName, setRaisedByName] = useState<string>(LEA_RAISED_BY_OPTIONS[0]);
   const [problemDescription, setProblemDescription] = useState<string>("");
   const [solution, setSolution] = useState<string>("");
   const [remarks, setRemarks] = useState<string>("");
@@ -184,15 +184,19 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
 
             <div>
               <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
-                Raised By
+                Request Raised By (LEA)
               </label>
-              <input
-                type="text"
+              <select
                 value={raisedByName}
                 onChange={(e) => setRaisedByName(e.target.value)}
-                placeholder="e.g. Sarah Jenkins"
-                className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
-              />
+                className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition font-medium"
+              >
+                {LEA_RAISED_BY_OPTIONS.map((lea) => (
+                  <option key={lea} value={lea}>
+                    {lea}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

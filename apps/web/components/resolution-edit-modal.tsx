@@ -2,8 +2,8 @@
 
 import React, { useState } from "react";
 import { MockTask } from "@/lib/store";
-import { TSPS, LSAS, STATUS_OPTIONS } from "@/lib/project-config";
-import { X, Check, Save } from "lucide-react";
+import { TSPS, LSAS, STATUS_OPTIONS, LEA_RAISED_BY_OPTIONS } from "@/lib/project-config";
+import { X, Save } from "lucide-react";
 import { toast } from "sonner";
 
 interface ResolutionEditModalProps {
@@ -16,6 +16,7 @@ export function ResolutionEditModal({ task, onClose, onSaved }: ResolutionEditMo
   const [tsp, setTsp] = useState(task.tsp);
   const [lsa, setLsa] = useState(task.lsa);
   const [status, setStatus] = useState(task.status);
+  const [raisedByName, setRaisedByName] = useState(task.raisedByName || LEA_RAISED_BY_OPTIONS[0]);
   const [problemDescription, setProblemDescription] = useState(task.problemDescription);
   const [solution, setSolution] = useState(task.solution);
   const [remarks, setRemarks] = useState(task.remarks || "");
@@ -34,6 +35,7 @@ export function ResolutionEditModal({ task, onClose, onSaved }: ResolutionEditMo
           tsp,
           lsa,
           status,
+          raisedByName,
           problemDescription,
           solution,
           remarks,
@@ -54,10 +56,10 @@ export function ResolutionEditModal({ task, onClose, onSaved }: ResolutionEditMo
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+    <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div className="px-6 py-4 bg-slate-900 dark:bg-slate-950 text-white flex items-center justify-between border-b border-slate-800">
           <div>
             <h3 className="font-bold text-sm flex items-center space-x-2">
               <span>Edit Resolution Record</span>
@@ -72,13 +74,13 @@ export function ResolutionEditModal({ task, onClose, onSaved }: ResolutionEditMo
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4 text-xs">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <div>
-              <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">TSP Provider</label>
+              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">TSP Provider</label>
               <select
                 value={tsp}
                 onChange={(e) => setTsp(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 font-medium text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 {TSPS.map((t) => (
                   <option key={t} value={t}>{t}</option>
@@ -87,11 +89,11 @@ export function ResolutionEditModal({ task, onClose, onSaved }: ResolutionEditMo
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">LSA Circle</label>
+              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">LSA Circle</label>
               <select
                 value={lsa}
                 onChange={(e) => setLsa(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 font-medium text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 {LSAS.map((l) => (
                   <option key={l} value={l}>{l}</option>
@@ -100,56 +102,69 @@ export function ResolutionEditModal({ task, onClose, onSaved }: ResolutionEditMo
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">Status</label>
+              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Status</label>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as any)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 font-medium text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 {STATUS_OPTIONS.map((s) => (
                   <option key={s.value} value={s.value}>{s.label}</option>
                 ))}
               </select>
             </div>
+
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Raised By (LEA)</label>
+              <select
+                value={raisedByName}
+                onChange={(e) => setRaisedByName(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 font-medium text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                {LEA_RAISED_BY_OPTIONS.map((lea) => (
+                  <option key={lea} value={lea}>{lea}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div>
-            <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">Problem Description</label>
+            <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Problem Description</label>
             <textarea
               rows={3}
               value={problemDescription}
               onChange={(e) => setProblemDescription(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-sans"
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-sans"
               required
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-bold text-emerald-800 uppercase mb-1">Resolution Applied</label>
+            <label className="block text-[11px] font-bold text-emerald-800 dark:text-emerald-400 uppercase mb-1">Resolution Applied</label>
             <textarea
               rows={3}
               value={solution}
               onChange={(e) => setSolution(e.target.value)}
-              className="w-full bg-emerald-50/50 border border-emerald-300 rounded-xl p-3 text-emerald-950 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-sans"
+              className="w-full bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800 rounded-xl p-3 text-emerald-950 dark:text-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-sans"
               required
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">Remarks & Notes</label>
+            <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Remarks & Notes</label>
             <input
               type="text"
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-end space-x-2">
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end space-x-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-slate-300 hover:bg-slate-100 rounded-xl text-slate-700 font-medium transition"
+              className="px-4 py-2 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-700 dark:text-slate-300 font-medium transition"
             >
               Cancel
             </button>

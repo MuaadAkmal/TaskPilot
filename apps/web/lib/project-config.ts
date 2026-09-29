@@ -57,6 +57,22 @@ export const LSAS = [
   "Himachal Pradesh",
 ] as const;
 
+export const LEA_RAISED_BY_OPTIONS = [
+  "DOT",
+  "DOT & LEA",
+  "CBDT",
+  "CBI",
+  "DOE/ED",
+  "DRI",
+  "NCB",
+  "NIA",
+  "POLICE",
+  "POLICE-CG",
+  "IB",
+  "RAW",
+  "CDOT",
+] as const;
+
 export const PROJECTS: ProjectMeta[] = [
   {
     code: "CMS",
