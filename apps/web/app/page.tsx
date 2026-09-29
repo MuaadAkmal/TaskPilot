@@ -8,7 +8,7 @@ import { ResolutionTable } from "@/components/resolution-table";
 import { CopilotDrawer } from "@/components/copilot-drawer";
 import { ProjectCode, PROJECTS } from "@/lib/project-config";
 import { MockTask } from "@/lib/store";
-import { Sparkles, Layers, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -105,6 +105,7 @@ function DashboardContent() {
 
         {/* 2. Interactive Paginated Table (8 entries per page) */}
         <ResolutionTable
+          currentProject={currentProject}
           tasks={tasks}
           allTasks={allTasks}
           total={total}

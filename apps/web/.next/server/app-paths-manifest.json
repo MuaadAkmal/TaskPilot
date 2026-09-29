@@ -4,5 +4,7 @@
   "/_not-found/page": "app/_not-found/page.js",
   "/api/agent/route": "app/api/agent/route.js",
   "/api/tasks/route": "app/api/tasks/route.js",
-  "/page": "app/page.js"
+  "/page": "app/page.js",
+  "/sign-in/page": "app/sign-in/page.js",
+  "/sign-up/page": "app/sign-up/page.js"
 }

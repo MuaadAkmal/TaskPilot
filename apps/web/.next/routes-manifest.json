@@ -58,6 +58,18 @@
       "regex": "^/api/tasks(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/tasks(?:/)?$"
+    },
+    {
+      "page": "/sign-in",
+      "regex": "^/sign\\-in(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/sign\\-in(?:/)?$"
+    },
+    {
+      "page": "/sign-up",
+      "regex": "^/sign\\-up(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/sign\\-up(?:/)?$"
     }
   ],
   "dataRoutes": [],

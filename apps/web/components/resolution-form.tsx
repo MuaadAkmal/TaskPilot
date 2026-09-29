@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ProjectCode, TSPS, LSAS, STATUS_OPTIONS } from "@/lib/project-config";
+import { ProjectCode, PROJECTS, STATUS_OPTIONS } from "@/lib/project-config";
 import { PlusCircle, CornerDownLeft, Sparkles, RotateCcw, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -11,8 +11,10 @@ interface ResolutionFormProps {
 }
 
 export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps) {
-  const [tsp, setTsp] = useState<string>("Airtel");
-  const [lsa, setLsa] = useState<string>("Delhi");
+  const activeProjectMeta = PROJECTS.find((p) => p.code === project) || PROJECTS[0];
+
+  const [primaryFieldVal, setPrimaryFieldVal] = useState<string>(activeProjectMeta.fields.primaryOptions[0]);
+  const [secondaryFieldVal, setSecondaryFieldVal] = useState<string>(activeProjectMeta.fields.secondaryOptions[0]);
   const [status, setStatus] = useState<string>("RESOLVED");
   const [raisedByName, setRaisedByName] = useState<string>("Sarah Jenkins (NOC)");
   const [problemDescription, setProblemDescription] = useState<string>("");
@@ -21,6 +23,12 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
   const [createdAt, setCreatedAt] = useState<string>("");
   const [resolvedAt, setResolvedAt] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  // Sync default options when project changes
+  useEffect(() => {
+    setPrimaryFieldVal(activeProjectMeta.fields.primaryOptions[0]);
+    setSecondaryFieldVal(activeProjectMeta.fields.secondaryOptions[0]);
+  }, [project, activeProjectMeta]);
 
   // Set default timestamps
   useEffect(() => {
@@ -64,8 +72,8 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           project,
-          tsp,
-          lsa,
+          tsp: primaryFieldVal,
+          lsa: secondaryFieldVal,
           status,
           raisedByName,
           problemDescription,
@@ -79,7 +87,7 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
       const data = await res.json();
       if (res.ok) {
         toast.success(`Resolution recorded successfully (Ticket #${data.task.id})`, {
-          description: "Alert email dispatched to project team members.",
+          description: `Dispatched notification for ${activeProjectMeta.name}.`,
         });
         handleReset();
         onRecordCreated();
@@ -104,7 +112,7 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
             <h2 className="text-xs font-bold tracking-tight text-white flex items-center space-x-2">
               <span>Record Resolved Task</span>
               <span className="text-[10px] font-normal px-2 py-0.2 bg-indigo-800/60 rounded text-indigo-200">
-                {project}
+                {activeProjectMeta.name}
               </span>
             </h2>
             <p className="text-[10px] text-indigo-200/80">Log symptoms, verified fixes, and remarks for team reference</p>
@@ -118,20 +126,20 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
       </div>
 
       <form onSubmit={handleSubmit} className="p-5 space-y-4">
-        {/* Row 1: Dropdowns and Metadata */}
+        {/* Row 1: Dynamic Dropdowns based on active Project */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           <div>
             <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-              TSP (Telecom Provider) *
+              {activeProjectMeta.fields.primaryFieldLabel} *
             </label>
             <select
-              value={tsp}
-              onChange={(e) => setTsp(e.target.value)}
+              value={primaryFieldVal}
+              onChange={(e) => setPrimaryFieldVal(e.target.value)}
               className="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
-              {TSPS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
+              {activeProjectMeta.fields.primaryOptions.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
                 </option>
               ))}
             </select>
@@ -139,16 +147,16 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
 
           <div>
             <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-              LSA (Service Circle) *
+              {activeProjectMeta.fields.secondaryFieldLabel} *
             </label>
             <select
-              value={lsa}
-              onChange={(e) => setLsa(e.target.value)}
+              value={secondaryFieldVal}
+              onChange={(e) => setSecondaryFieldVal(e.target.value)}
               className="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
-              {LSAS.map((l) => (
-                <option key={l} value={l}>
-                  {l}
+              {activeProjectMeta.fields.secondaryOptions.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
                 </option>
               ))}
             </select>
@@ -195,7 +203,7 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
               rows={3}
               value={problemDescription}
               onChange={(e) => setProblemDescription(e.target.value)}
-              placeholder="Describe error code, affected nodes/interfaces, alarms, or symptom behavior..."
+              placeholder={`Describe error codes, affected components in ${activeProjectMeta.name}, or alarms...`}
               className="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl p-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-sans"
               required
             />
@@ -210,7 +218,7 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
               rows={3}
               value={solution}
               onChange={(e) => setSolution(e.target.value)}
-              placeholder="Specify the exact commands executed, patch applied, or physical component replaced..."
+              placeholder="Specify the exact commands executed, patch applied, or component reconfigured..."
               className="w-full text-xs bg-emerald-50/40 border border-emerald-300 rounded-xl p-3 text-emerald-950 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-sans"
               required
             />

@@ -4,5 +4,7 @@
   "/_not-found/page": "/_not-found",
   "/api/agent/route": "/api/agent",
   "/api/tasks/route": "/api/tasks",
-  "/page": "/"
+  "/page": "/",
+  "/sign-in/page": "/sign-in",
+  "/sign-up/page": "/sign-up"
 }
