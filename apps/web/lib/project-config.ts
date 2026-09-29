@@ -88,6 +88,22 @@ export const MCX_RAISED_BY_OPTIONS = [
   "Vendor",
 ] as const;
 
+export const CIAS_DEVICE_LOCATIONS = [
+  "Back-Gate-1",
+  "Back-Gate-2",
+  "Main-Gate-1",
+  "Main-Gate-2",
+  "Main-Gate-3",
+  "Main-Gate-4",
+  "Mis-Lab",
+] as const;
+
+export const CIAS_RAISED_BY_OPTIONS = [
+  "Staff",
+  "PI Team",
+  "Validation Team",
+] as const;
+
 export const PROJECTS: ProjectMeta[] = [
   {
     code: "CMS",
@@ -104,17 +120,17 @@ export const PROJECTS: ProjectMeta[] = [
     },
   },
   {
-    code: "MCX",
-    name: "MCX (Mission Critical Push-to-Talk)",
-    badge: "MCX",
-    description: "Mission Critical Push-to-Talk & Broadband Communications Platform",
-    color: "bg-purple-600 text-white",
+    code: "CIAS",
+    name: "CIAS (Core Infrastructure Access & Security)",
+    badge: "CIAS",
+    description: "Access control, biometric gates, perimeter devices & security logging",
+    color: "bg-amber-600 text-white",
     fields: {
-      primaryFieldLabel: "Service Component",
-      secondaryFieldLabel: "Cluster / Site",
-      primaryOptions: ["MC-PTT Server", "MC-Video Gateway", "MC-Data Broker", "Floor Control Agent", "Key Management Server"],
-      secondaryOptions: ["Core-DC-Primary", "Core-DC-Secondary", "Edge-Node-01", "Edge-Node-02"],
-      raisedByOptions: MCX_RAISED_BY_OPTIONS,
+      primaryFieldLabel: "Device Location",
+      secondaryFieldLabel: "Zone / Category",
+      primaryOptions: CIAS_DEVICE_LOCATIONS,
+      secondaryOptions: ["Perimeter Access", "Security Control", "Lab Facility", "Core Facility"],
+      raisedByOptions: CIAS_RAISED_BY_OPTIONS,
     },
   },
   {
@@ -129,6 +145,20 @@ export const PROJECTS: ProjectMeta[] = [
       primaryOptions: ["SS7/Diameter Attack", "DDoS Mitigation", "Rogue BTS / IMSI Catcher", "Malicious Traffic Surge", "BGP Hijack Alert", "Firewall / Perimeter", "System Infrastructure"],
       secondaryOptions: ["Circle Border Gateway", "Core Packet Switched", "Signaling Core", "Interconnect Gateway", "DC Server Stack", "Management OOB"],
       raisedByOptions: TSOC_RAISED_BY_OPTIONS,
+    },
+  },
+  {
+    code: "MCX",
+    name: "MCX (Mission Critical Push-to-Talk)",
+    badge: "MCX",
+    description: "Mission Critical Push-to-Talk & Broadband Communications Platform",
+    color: "bg-purple-600 text-white",
+    fields: {
+      primaryFieldLabel: "Service Component",
+      secondaryFieldLabel: "Cluster / Site",
+      primaryOptions: ["MC-PTT Server", "MC-Video Gateway", "MC-Data Broker", "Floor Control Agent", "Key Management Server"],
+      secondaryOptions: ["Core-DC-Primary", "Core-DC-Secondary", "Edge-Node-01", "Edge-Node-02"],
+      raisedByOptions: MCX_RAISED_BY_OPTIONS,
     },
   },
   {
@@ -156,32 +186,6 @@ export const PROJECTS: ProjectMeta[] = [
       secondaryFieldLabel: "Zone / Node",
       primaryOptions: TSPS,
       secondaryOptions: LSAS,
-      raisedByOptions: CMS_LEA_RAISED_BY_OPTIONS,
-    },
-  },
-  {
-    code: "CIAS",
-    name: "CIAS (Core Infrastructure)",
-    badge: "CIAS",
-    description: "Core Infrastructure Audit & Security Services",
-    color: "bg-amber-600 text-white",
-    fields: {
-      primaryFieldLabel: "Security Domain / Module",
-      secondaryFieldLabel: "Network Zone / Tier",
-      primaryOptions: [
-        "Identity & Access IAM",
-        "Hardware Security Module (HSM)",
-        "Firewall & WAF Rules",
-        "Audit Log Ingestion",
-        "Vulnerability Patching",
-      ],
-      secondaryOptions: [
-        "Production DMZ",
-        "Internal Core Backbone",
-        "Management Subnet OOB",
-        "Secure Vault Zone",
-        "Partner Peering Hub",
-      ],
       raisedByOptions: CMS_LEA_RAISED_BY_OPTIONS,
     },
   },
