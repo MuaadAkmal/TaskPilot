@@ -10,7 +10,8 @@
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "prisma:seed": "node -r esbuild-register prisma/seed.ts",
-    "prisma:seed:employees": "node prisma/seed-employees.js"
+    "prisma:seed:employees": "node prisma/seed-employees.js",
+    "prisma:seed:cms": "node prisma/seed-cms-excel.js"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.39.7",
@@ -42,7 +43,8 @@
     "resend": "^4.1.2",
     "sonner": "^2.0.1",
     "tailwind-merge": "^3.0.2",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^9.6.0",
