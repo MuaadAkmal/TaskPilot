@@ -515,7 +515,7 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
 
             <div>
               <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-1">
-                {isCias ? "Solution" : "Solution Applied"}
+                Solution
               </label>
               <textarea
                 rows={2}

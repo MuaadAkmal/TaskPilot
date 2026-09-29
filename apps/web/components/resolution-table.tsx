@@ -158,7 +158,7 @@ export function ResolutionTable({
       { id: "resolvedAt", label: "Resolved At", getValue: (t) => (t.resolvedAt ? new Date(t.resolvedAt).toLocaleString() : "") },
       { id: "downtimeMinutes", label: "Downtime (Minutes)", getValue: (t) => t.downtimeMinutes || 0 },
       { id: "problemDescription", label: "Problem description / Activity Detail", getValue: (t) => t.problemDescription },
-      { id: "solution", label: "Solution Applied", getValue: (t) => t.solution },
+      { id: "solution", label: "Solution", getValue: (t) => t.solution },
       { id: "remarks", label: "Remarks", getValue: (t) => t.remarks || "" },
     ];
   }, [currentProject, isCdrOrIpdr, isCias, isTsoc, isMcx, activeProjectMeta]);

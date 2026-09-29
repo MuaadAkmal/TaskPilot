@@ -229,7 +229,7 @@ export function ResolutionEditModal({ task, onClose, onSaved }: ResolutionEditMo
 
           <div>
             <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-1">
-              Solution Applied
+              Solution
             </label>
             <textarea
               rows={3}

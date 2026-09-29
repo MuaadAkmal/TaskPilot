@@ -8,7 +8,6 @@ import { ResolutionForm } from "@/components/resolution-form";
 import { ResolutionTable } from "@/components/resolution-table";
 import { ProjectTeamView } from "@/components/project-team-view";
 import { ProjectDocumentsView } from "@/components/project-documents-view";
-import { CopilotDrawer } from "@/components/copilot-drawer";
 import { ProjectCode, PROJECTS } from "@/lib/project-config";
 import { MockTask } from "@/lib/store";
 import { Users, Layers, BookOpen, Clock } from "lucide-react";
@@ -211,9 +210,6 @@ function DashboardContent() {
         {/* Tab 3: Documentation & Links */}
         {activeTab === "documents" && <ProjectDocumentsView project={currentProject} />}
       </main>
-
-      {/* Floating Copilot Drawer */}
-      <CopilotDrawer project={currentProject} onRefreshTasks={fetchTasks} />
     </div>
   );
 }
