@@ -237,21 +237,34 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
                   </select>
                 </div>
 
-                <div className="col-span-2 md:col-span-4">
-                  <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
-                    Request Raised By (LEA)
-                  </label>
-                  <select
-                    value={raisedByName}
-                    onChange={(e) => setRaisedByName(e.target.value)}
-                    className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition font-medium"
-                  >
-                    {raisedByList.map((lea) => (
-                      <option key={lea} value={lea}>
-                        {lea}
-                      </option>
-                    ))}
-                  </select>
+                <div className="col-span-2 md:col-span-4 bg-slate-50/70 dark:bg-slate-800/40 p-3.5 rounded-xl border border-slate-200/70 dark:border-slate-700/60">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                      Request Raised By (LEA)
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      Selected: <strong className="text-indigo-600 dark:text-indigo-400">{raisedByName}</strong>
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-1.5">
+                    {raisedByList.map((lea) => {
+                      const isSelected = raisedByName === lea;
+                      return (
+                        <button
+                          key={lea}
+                          type="button"
+                          onClick={() => setRaisedByName(lea)}
+                          className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition text-center border ${
+                            isSelected
+                              ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-xs font-semibold"
+                              : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200/80 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-750"
+                          }`}
+                        >
+                          {lea}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </>
             ) : isCdrOrIpdr ? (
