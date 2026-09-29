@@ -35,7 +35,7 @@ import Papa from "papaparse";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
-import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from "@/lib/utils";
+import { formatDateSept25th, formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from "@/lib/utils";
 import { ResolutionEditModal } from "./resolution-edit-modal";
 import { ResolutionDetailModal } from "./resolution-detail-modal";
 import { CsvImportModal } from "./csv-import-modal";
@@ -672,7 +672,7 @@ export function ResolutionTable({
 
       {/* Clean Minimal Table */}
       <div className="overflow-x-auto min-h-[360px]">
-        <table className="w-full text-left text-xs">
+        <table className="w-full text-left text-xs table-fixed">
           <thead>
             {isCdrOrIpdr ? (
               /* CDR & IPDR Columns: LSA, TSP, DATE, STATUS, REQUEST RAISED BY, PROBLEM DESCRIPTION, SOLUTION, REMARKS */
@@ -686,15 +686,15 @@ export function ResolutionTable({
                     )}
                   </button>
                 </th>
-                <th className="py-2.5 px-3.5 w-14">#</th>
-                <th className="py-2.5 px-3 w-28">LSA</th>
+                <th className="py-2.5 px-3.5 w-12">#</th>
+                <th className="py-2.5 px-3 w-16">LSA</th>
                 <th className="py-2.5 px-3 w-28">TSP</th>
-                <th className="py-2.5 px-3 w-32">DATE</th>
+                <th className="py-2.5 px-3 w-36">DATE</th>
                 <th className="py-2.5 px-3 w-24">STATUS</th>
                 <th className="py-2.5 px-3 w-36">REQUEST RAISED BY</th>
-                <th className="py-2.5 px-3">PROBLEM DESCRIPTION</th>
-                <th className="py-2.5 px-3">SOLUTION</th>
-                <th className="py-2.5 px-3 w-32">REMARKS</th>
+                <th className="py-2.5 px-3 w-[28%]">PROBLEM DESCRIPTION</th>
+                <th className="py-2.5 px-3 w-[28%]">SOLUTION</th>
+                <th className="py-2.5 px-3 w-28">REMARKS</th>
                 <th className="py-2.5 px-3 text-right w-16">Actions</th>
               </tr>
             ) : isCias ? (
@@ -709,14 +709,14 @@ export function ResolutionTable({
                     )}
                   </button>
                 </th>
-                <th className="py-2.5 px-3.5 w-14">#</th>
-                <th className="py-2.5 px-3 w-36">Device Location</th>
+                <th className="py-2.5 px-3.5 w-12">#</th>
+                <th className="py-2.5 px-3 w-32">Device Location</th>
                 <th className="py-2.5 px-3 w-24">Status</th>
                 <th className="py-2.5 px-3 w-36">Request Raised By</th>
-                <th className="py-2.5 px-3 w-32">Date</th>
-                <th className="py-2.5 px-3">Problem</th>
-                <th className="py-2.5 px-3">Solution</th>
-                <th className="py-2.5 px-3 w-32">Remarks</th>
+                <th className="py-2.5 px-3 w-36">Date</th>
+                <th className="py-2.5 px-3 w-[30%]">Problem</th>
+                <th className="py-2.5 px-3 w-[30%]">Solution</th>
+                <th className="py-2.5 px-3 w-28">Remarks</th>
                 <th className="py-2.5 px-3 text-right w-16">Actions</th>
               </tr>
             ) : isTsoc || isMcx ? (
@@ -731,13 +731,13 @@ export function ResolutionTable({
                     )}
                   </button>
                 </th>
-                <th className="py-2.5 px-3.5 w-14">#</th>
-                <th className="py-2.5 px-3 w-32">DATE</th>
+                <th className="py-2.5 px-3.5 w-12">#</th>
+                <th className="py-2.5 px-3 w-36">DATE</th>
                 <th className="py-2.5 px-3 w-24">STATUS</th>
                 <th className="py-2.5 px-3 w-36">REQUEST RAISED BY</th>
-                <th className="py-2.5 px-3">PROBLEM DESCRIPTION</th>
-                <th className="py-2.5 px-3">SOLUTION</th>
-                <th className="py-2.5 px-3 w-32">REMARKS</th>
+                <th className="py-2.5 px-3 w-[34%]">PROBLEM DESCRIPTION</th>
+                <th className="py-2.5 px-3 w-[34%]">SOLUTION</th>
+                <th className="py-2.5 px-3 w-28">REMARKS</th>
                 <th className="py-2.5 px-3 text-right w-16">Actions</th>
               </tr>
             ) : (
@@ -752,14 +752,14 @@ export function ResolutionTable({
                     )}
                   </button>
                 </th>
-                <th className="py-2.5 px-3.5 w-14">#</th>
-                <th className="py-2.5 px-3 w-24">LSA</th>
+                <th className="py-2.5 px-3.5 w-12">#</th>
+                <th className="py-2.5 px-3 w-16">LSA</th>
                 <th className="py-2.5 px-3 w-28">TSP</th>
                 <th className="py-2.5 px-3 w-24">Status</th>
                 <th className="py-2.5 px-3 w-32">Raised By</th>
-                <th className="py-2.5 px-3 w-32">Resolved</th>
-                <th className="py-2.5 px-3">Problem description / Activity Detail</th>
-                <th className="py-2.5 px-3">Solution</th>
+                <th className="py-2.5 px-3 w-36">Resolved</th>
+                <th className="py-2.5 px-3 w-[30%]">Problem description / Activity Detail</th>
+                <th className="py-2.5 px-3 w-[30%]">Solution</th>
                 <th className="py-2.5 px-3 text-right w-16">Actions</th>
               </tr>
             )}
@@ -801,89 +801,89 @@ export function ResolutionTable({
 
                   {isCdrOrIpdr ? (
                     <>
-                      <td className="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-200">
+                      <td className="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-200 truncate">
                         {task.lsa}
                       </td>
-                      <td className="py-2.5 px-3 font-medium text-slate-700 dark:text-slate-300">
+                      <td className="py-2.5 px-3 font-medium text-slate-700 dark:text-slate-300 truncate">
                         {task.tsp}
                       </td>
-                      <td className="py-2.5 px-3 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
-                        {formatDateDDMMYYYY(task.resolvedAt || task.createdAt)}
+                      <td className="py-2.5 px-3 text-slate-600 dark:text-slate-400 font-mono text-[11px] whitespace-nowrap">
+                        {formatDateSept25th(task.resolvedAt || task.createdAt)}
                       </td>
                       <td className="py-2.5 px-3">{getStatusBadge(task.status)}</td>
-                      <td className="py-2.5 px-3 font-medium text-slate-800 dark:text-slate-200">
+                      <td className="py-2.5 px-3 font-medium text-slate-800 dark:text-slate-200 truncate">
                         {task.raisedByName}
                       </td>
-                      <td className="py-2.5 px-3 text-slate-700 dark:text-slate-300 max-w-[200px] truncate">
+                      <td className="py-2.5 px-3 text-slate-800 dark:text-slate-200 truncate">
                         {task.problemDescription}
                       </td>
-                      <td className="py-2.5 px-3 text-slate-700 dark:text-slate-300 max-w-[200px] truncate font-mono text-[11px]">
+                      <td className="py-2.5 px-3 text-slate-700 dark:text-slate-300 truncate font-mono text-[11px]">
                         {task.solution}
                       </td>
-                      <td className="py-2.5 px-3 text-slate-500 dark:text-slate-400 max-w-[120px] truncate">
+                      <td className="py-2.5 px-3 text-slate-500 dark:text-slate-400 truncate">
                         {task.remarks || "-"}
                       </td>
                     </>
                   ) : isCias ? (
                     <>
-                      <td className="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-200">
+                      <td className="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-200 truncate">
                         {task.tsp}
                       </td>
                       <td className="py-2.5 px-3">{getStatusBadge(task.status)}</td>
-                      <td className="py-2.5 px-3 font-medium text-slate-800 dark:text-slate-200">
+                      <td className="py-2.5 px-3 font-medium text-slate-800 dark:text-slate-200 truncate">
                         {task.raisedByName}
                       </td>
-                      <td className="py-2.5 px-3 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
-                        {formatDateDDMMYYYY(task.resolvedAt || task.createdAt)}
+                      <td className="py-2.5 px-3 text-slate-600 dark:text-slate-400 font-mono text-[11px] whitespace-nowrap">
+                        {formatDateSept25th(task.resolvedAt || task.createdAt)}
                       </td>
-                      <td className="py-2.5 px-3 text-slate-700 dark:text-slate-300 max-w-[200px] truncate">
+                      <td className="py-2.5 px-3 text-slate-800 dark:text-slate-200 truncate">
                         {task.problemDescription}
                       </td>
-                      <td className="py-2.5 px-3 text-slate-700 dark:text-slate-300 max-w-[200px] truncate font-mono text-[11px]">
+                      <td className="py-2.5 px-3 text-slate-700 dark:text-slate-300 truncate font-mono text-[11px]">
                         {task.solution}
                       </td>
-                      <td className="py-2.5 px-3 text-slate-500 dark:text-slate-400 max-w-[120px] truncate">
+                      <td className="py-2.5 px-3 text-slate-500 dark:text-slate-400 truncate">
                         {task.remarks || "-"}
                       </td>
                     </>
                   ) : isTsoc || isMcx ? (
                     <>
-                      <td className="py-2.5 px-3 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
-                        {formatDateDDMMYYYY(task.resolvedAt || task.createdAt)}
+                      <td className="py-2.5 px-3 text-slate-600 dark:text-slate-400 font-mono text-[11px] whitespace-nowrap">
+                        {formatDateSept25th(task.resolvedAt || task.createdAt)}
                       </td>
                       <td className="py-2.5 px-3">{getStatusBadge(task.status)}</td>
-                      <td className="py-2.5 px-3 font-medium text-slate-800 dark:text-slate-200">
+                      <td className="py-2.5 px-3 font-medium text-slate-800 dark:text-slate-200 truncate">
                         {task.raisedByName}
                       </td>
-                      <td className="py-2.5 px-3 text-slate-700 dark:text-slate-300 max-w-[220px] truncate">
+                      <td className="py-2.5 px-3 text-slate-800 dark:text-slate-200 truncate">
                         {task.problemDescription}
                       </td>
-                      <td className="py-2.5 px-3 text-slate-700 dark:text-slate-300 max-w-[220px] truncate font-mono text-[11px]">
+                      <td className="py-2.5 px-3 text-slate-700 dark:text-slate-300 truncate font-mono text-[11px]">
                         {task.solution}
                       </td>
-                      <td className="py-2.5 px-3 text-slate-500 dark:text-slate-400 max-w-[120px] truncate">
+                      <td className="py-2.5 px-3 text-slate-500 dark:text-slate-400 truncate">
                         {task.remarks || "-"}
                       </td>
                     </>
                   ) : (
                     <>
-                      <td className="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-200">
+                      <td className="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-200 truncate">
                         {task.lsa}
                       </td>
-                      <td className="py-2.5 px-3 font-medium text-slate-700 dark:text-slate-300">
+                      <td className="py-2.5 px-3 font-medium text-slate-700 dark:text-slate-300 truncate">
                         {task.tsp}
                       </td>
                       <td className="py-2.5 px-3">{getStatusBadge(task.status)}</td>
-                      <td className="py-2.5 px-3 text-slate-700 dark:text-slate-300">
+                      <td className="py-2.5 px-3 text-slate-800 dark:text-slate-200 truncate">
                         {task.raisedByName}
                       </td>
-                      <td className="py-2.5 px-3 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
-                        {formatDateDDMMYYYY(task.resolvedAt || task.createdAt)}
+                      <td className="py-2.5 px-3 text-slate-600 dark:text-slate-400 font-mono text-[11px] whitespace-nowrap">
+                        {formatDateSept25th(task.resolvedAt || task.createdAt)}
                       </td>
-                      <td className="py-2.5 px-3 text-slate-700 dark:text-slate-300 max-w-[200px] truncate">
+                      <td className="py-2.5 px-3 text-slate-800 dark:text-slate-200 truncate">
                         {task.problemDescription}
                       </td>
-                      <td className="py-2.5 px-3 text-slate-700 dark:text-slate-300 max-w-[180px] truncate font-mono text-[11px]">
+                      <td className="py-2.5 px-3 text-slate-700 dark:text-slate-300 truncate font-mono text-[11px]">
                         {task.solution}
                       </td>
                     </>

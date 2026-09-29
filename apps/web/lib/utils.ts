@@ -33,6 +33,30 @@ export function calculateDowntimeMinutes(startIso?: string | null, endIso?: stri
 }
 
 /**
+ * Formats any Date or ISO string into 'Sept 25th, 2026' or 'Jan 1st, 2026' format
+ */
+export function formatDateSept25th(dateInput: Date | string | number | null | undefined): string {
+  if (!dateInput) return "-";
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return "-";
+
+  const months = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"
+  ];
+  const month = months[d.getMonth()];
+  const day = d.getDate();
+  const year = d.getFullYear();
+
+  let suffix = "th";
+  if (day % 10 === 1 && day !== 11) suffix = "st";
+  else if (day % 10 === 2 && day !== 12) suffix = "nd";
+  else if (day % 10 === 3 && day !== 13) suffix = "rd";
+
+  return `${month} ${day}${suffix}, ${year}`;
+}
+
+/**
  * Formats any Date or ISO string into DD/MM/YYYY format (e.g. 29/09/2026)
  */
 export function formatDateDDMMYYYY(dateInput: Date | string | number | null | undefined): string {

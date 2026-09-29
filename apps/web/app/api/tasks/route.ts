@@ -21,19 +21,22 @@ export async function GET(req: Request) {
 
     // Query Prisma DB first
     try {
-      const whereClause: any = {
-        project: { in: project === "CMS" ? ["CMS", "CMS_VAL_FS"] : [project] },
-      };
+      const whereClause: any = {};
+
+      // If user typed a search query, search across ALL projects OR project-specific if not searching
+      if (!search) {
+        whereClause.project = { in: project === "CMS" ? ["CMS", "CMS_VAL_FS"] : [project] };
+      }
 
       if (tsp && tsp !== "ALL") whereClause.tsp = tsp;
       if (lsa && lsa !== "ALL") whereClause.lsa = lsa;
 
       if (search) {
         whereClause.OR = [
-          { problemDescription: { contains: search } },
-          { solution: { contains: search } },
-          { remarks: { contains: search } },
-          { raisedByName: { contains: search } },
+          { problemDescription: { contains: search, mode: "insensitive" } },
+          { solution: { contains: search, mode: "insensitive" } },
+          { remarks: { contains: search, mode: "insensitive" } },
+          { raisedByName: { contains: search, mode: "insensitive" } },
         ];
       }
 
@@ -114,6 +117,7 @@ export async function GET(req: Request) {
 
     // Fallback store
     let filtered = taskStore.getAll().filter((t) => {
+      if (search) return true; // search across all projects
       if (project === "CMS") {
         return t.project === "CMS" || t.project === ("CMS_VAL_FS" as any);
       }

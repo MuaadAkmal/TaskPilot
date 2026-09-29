@@ -49,12 +49,13 @@ export const CMS_LSA_FULL_NAMES: Record<string, string> = {
 };
 
 export const CMS_LSA_TSP_MAP: Record<string, string[]> = {
-  AP: ["AT", "BS", "RC", "RI", "VO", "TA", "ZVC", "P3 Tech"],
-  GJ: ["AT", "BS", "RC", "RI", "VO", "TA"],
-  KA: ["AT", "BS", "RC", "RI", "VO", "TA", "Ring Central", "AT and T"],
-  KR: ["AT", "BS", "RC", "RI", "VO", "TA"],
-  MP: ["AT", "BS", "RC", "RI", "VO", "TA"],
+  AP: ["None", "AT", "BS", "RC", "RI", "VO", "TA", "ZVC", "P3 Tech"],
+  GJ: ["None", "AT", "BS", "RC", "RI", "VO", "TA"],
+  KA: ["None", "AT", "BS", "RC", "RI", "VO", "TA", "Ring Central", "AT and T"],
+  KR: ["None", "AT", "BS", "RC", "RI", "VO", "TA"],
+  MP: ["None", "AT", "BS", "RC", "RI", "VO", "TA"],
   MB: [
+    "None",
     "AT",
     "BS",
     "RC",
@@ -77,12 +78,13 @@ export const CMS_LSA_TSP_MAP: Record<string, string[]> = {
     "NTT",
     "Vodafone ILD",
   ],
-  MH: ["AT", "BS", "RC", "RI", "VO", "TA"],
-  OR: ["AT", "BS", "RC", "RI", "VO", "TA"],
-  TN: ["AT", "BS", "RC", "RI", "VO", "TA", "ZVC", "Airtel IPLC", "Singtel IPLC"],
+  MH: ["None", "AT", "BS", "RC", "RI", "VO", "TA"],
+  OR: ["None", "AT", "BS", "RC", "RI", "VO", "TA"],
+  TN: ["None", "AT", "BS", "RC", "RI", "VO", "TA", "ZVC", "Airtel IPLC", "Singtel IPLC"],
 };
 
 export const TSPS = [
+  "None",
   "AT",
   "BS",
   "RC",
@@ -184,6 +186,7 @@ export const CIAS_RAISED_BY_OPTIONS = [
 ] as const;
 
 export const CDR_IPDR_TSPS = [
+  "None",
   "Airtel",
   "Reliance Jio",
   "Vodafone",
