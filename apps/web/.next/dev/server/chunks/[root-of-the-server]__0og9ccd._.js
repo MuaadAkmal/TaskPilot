@@ -508,15 +508,50 @@ __turbopack_context__.s([
 ]);
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$resend$2f$dist$2f$index$2e$mjs__$5b$app$2d$route$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/resend/dist/index.mjs [app-route] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$project$2d$config$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/lib/project-config.ts [app-route] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/lib/prisma.ts [app-route] (ecmascript)");
+;
 ;
 ;
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey && !resendApiKey.includes("placeholder") ? new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$resend$2f$dist$2f$index$2e$mjs__$5b$app$2d$route$5d$__$28$ecmascript$29$__["Resend"](resendApiKey) : null;
 async function sendResolutionEmailAlert({ task, teamEmails }) {
     const projectMeta = __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$project$2d$config$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["PROJECTS"].find((p)=>p.code === task.project) || __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$project$2d$config$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["PROJECTS"][0];
-    const recipients = teamEmails && teamEmails.length > 0 ? teamEmails : [
-        "team-alerts@taskpilot.internal"
-    ];
+    // 1. Fetch subscribed team members who haven't opted out
+    let recipients = [];
+    if (teamEmails && teamEmails.length > 0) {
+        recipients = teamEmails;
+    } else {
+        try {
+            const activeSubscribedUsers = await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].user.findMany({
+                where: {
+                    receiveEmailAlerts: true
+                },
+                select: {
+                    email: true,
+                    projects: true,
+                    alertOnProjects: true
+                }
+            });
+            // Filter by project subscription
+            recipients = activeSubscribedUsers.filter((u)=>{
+                if (u.alertOnProjects === "ALL") return true;
+                try {
+                    const projects = JSON.parse(u.projects || "[]");
+                    return projects.includes(task.project);
+                } catch  {
+                    return true;
+                }
+            }).map((u)=>u.email);
+        } catch (dbErr) {
+            console.warn("Could not query subscribed users from DB:", dbErr);
+        }
+    }
+    // Fallback default list if no custom users in DB yet
+    if (recipients.length === 0) {
+        recipients = [
+            "team-alerts@taskpilot.internal"
+        ];
+    }
     const emailHtml = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
       <div style="background-color: #4f46e5; padding: 24px; color: #ffffff;">
@@ -571,15 +606,16 @@ async function sendResolutionEmailAlert({ task, teamEmails }) {
       </div>
 
       <div style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 14px; text-align: center; color: #94a3b8; font-size: 11px;">
-        Sent automatically by TaskPilot Operational Hub. Project: ${projectMeta.name}
+        Sent automatically by TaskPilot Operational Hub to opted-in team members.
       </div>
     </div>
   `;
     if (!resend) {
-        console.log(`[Resend Mock Simulation] Alert queued for ${recipients.join(", ")}: Ticket #${task.id} (${task.tsp} - ${task.lsa})`);
+        console.log(`[Resend Mock Simulation] Alert dispatched only to opted-in users (${recipients.join(", ")}): Ticket #${task.id}`);
         return {
             success: true,
-            simulated: true
+            simulated: true,
+            recipients
         };
     }
     try {
@@ -592,7 +628,8 @@ async function sendResolutionEmailAlert({ task, teamEmails }) {
         });
         return {
             success: true,
-            response
+            response,
+            recipients
         };
     } catch (error) {
         console.error("[Resend Error]: Failed to send notification email", error);

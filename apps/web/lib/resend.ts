@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { ProjectCode, PROJECTS } from "./project-config";
+import { prisma } from "./prisma";
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey && !resendApiKey.includes("placeholder") ? new Resend(resendApiKey) : null;
@@ -23,7 +24,45 @@ export interface EmailAlertPayload {
 
 export async function sendResolutionEmailAlert({ task, teamEmails }: EmailAlertPayload) {
   const projectMeta = PROJECTS.find((p) => p.code === (task.project as ProjectCode)) || PROJECTS[0];
-  const recipients = teamEmails && teamEmails.length > 0 ? teamEmails : ["team-alerts@taskpilot.internal"];
+
+  // 1. Fetch subscribed team members who haven't opted out
+  let recipients: string[] = [];
+  if (teamEmails && teamEmails.length > 0) {
+    recipients = teamEmails;
+  } else {
+    try {
+      const activeSubscribedUsers = await prisma.user.findMany({
+        where: {
+          receiveEmailAlerts: true, // Only users with the tick mark enabled
+        },
+        select: {
+          email: true,
+          projects: true,
+          alertOnProjects: true,
+        },
+      });
+
+      // Filter by project subscription
+      recipients = activeSubscribedUsers
+        .filter((u) => {
+          if (u.alertOnProjects === "ALL") return true;
+          try {
+            const projects = JSON.parse(u.projects || "[]");
+            return projects.includes(task.project);
+          } catch {
+            return true;
+          }
+        })
+        .map((u) => u.email);
+    } catch (dbErr) {
+      console.warn("Could not query subscribed users from DB:", dbErr);
+    }
+  }
+
+  // Fallback default list if no custom users in DB yet
+  if (recipients.length === 0) {
+    recipients = ["team-alerts@taskpilot.internal"];
+  }
 
   const emailHtml = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
@@ -83,14 +122,14 @@ export async function sendResolutionEmailAlert({ task, teamEmails }: EmailAlertP
       </div>
 
       <div style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 14px; text-align: center; color: #94a3b8; font-size: 11px;">
-        Sent automatically by TaskPilot Operational Hub. Project: ${projectMeta.name}
+        Sent automatically by TaskPilot Operational Hub to opted-in team members.
       </div>
     </div>
   `;
 
   if (!resend) {
-    console.log(`[Resend Mock Simulation] Alert queued for ${recipients.join(", ")}: Ticket #${task.id} (${task.tsp} - ${task.lsa})`);
-    return { success: true, simulated: true };
+    console.log(`[Resend Mock Simulation] Alert dispatched only to opted-in users (${recipients.join(", ")}): Ticket #${task.id}`);
+    return { success: true, simulated: true, recipients };
   }
 
   try {
@@ -101,7 +140,7 @@ export async function sendResolutionEmailAlert({ task, teamEmails }: EmailAlertP
       subject: `[TaskPilot - ${projectMeta.badge}] Incident #${task.id} Resolved (${task.tsp} / ${task.lsa})`,
       html: emailHtml,
     });
-    return { success: true, response };
+    return { success: true, response, recipients };
   } catch (error) {
     console.error("[Resend Error]: Failed to send notification email", error);
     return { success: false, error };

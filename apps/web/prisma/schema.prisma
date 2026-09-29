@@ -8,15 +8,17 @@ generator client {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  clerkId   String   @unique
-  email     String   @unique
-  name      String?
-  title     String?  // e.g. "Senior NOC Engineer", "L2 Tech Lead"
-  projects  String   // JSON stringified array of assigned project codes ["CMS_VAL_FS", "ASR", "CIAS"]
-  role      String   @default("ENGINEER") // ADMIN, TEAM_LEAD, ENGINEER
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                  String   @id @default(uuid())
+  clerkId             String   @unique
+  email               String   @unique
+  name                String?
+  title               String?  // e.g. "Senior NOC Engineer", "L2 Tech Lead", "Field Operations Lead"
+  projects            String   // JSON array of assigned project codes ["CMS_VAL_FS", "ASR", "CIAS"]
+  role                String   @default("ENGINEER") // ADMIN, TEAM_LEAD, ENGINEER
+  receiveEmailAlerts  Boolean  @default(true) // Tick mark: If false, user is opted out from team broadcast emails
+  alertOnProjects     String   @default("ALL") // "ALL" or specific JSON array of project codes
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   createdTasks TaskResolution[] @relation("TaskCreator")
 

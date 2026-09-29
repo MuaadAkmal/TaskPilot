@@ -1,6 +1,6 @@
 {
   "node": {
-    "00680e5e23a7d385cc53d4ee3d3554c1146563cbd7": {
+    "002887e66ca5c1c8542e329078f77fe7b7b62a376e": {
       "workers": {
         "app/page": {
           "moduleId": 1470,
@@ -11,7 +11,7 @@
       "exportedName": "detectKeylessEnvDriftAction",
       "filename": "node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
     },
-    "0025ba4df01183341657f73c69b2d9367ef0e6167e": {
+    "0098d75967844c95f41c69464e749efe571c34ee4d": {
       "workers": {
         "app/page": {
           "moduleId": 1470,
@@ -22,7 +22,7 @@
       "exportedName": "invalidateCacheAction",
       "filename": "node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
     },
-    "0057d3306b8bcf511b79fffcb0060d31797837f138": {
+    "00dac89c2d6fe6639f470fdfffa35c0ec4fb1581fd": {
       "workers": {
         "app/page": {
           "moduleId": 1470,
@@ -33,7 +33,7 @@
       "exportedName": "createOrReadKeylessAction",
       "filename": "node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
     },
-    "00e0441f934c43454f4b7ffcc65865313c62c37d32": {
+    "00571327282b0b16b8a5295f7859c3c73eccdbd0f6": {
       "workers": {
         "app/page": {
           "moduleId": 1470,
@@ -44,7 +44,7 @@
       "exportedName": "collectKeylessMetadata",
       "filename": "node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
     },
-    "40556b3d934435e395e563c7e2e6db2bee7dd21419": {
+    "40fd676b50b3da621a03e55b67d9d8a1fcff40fd7b": {
       "workers": {
         "app/page": {
           "moduleId": 1470,
@@ -55,7 +55,7 @@
       "exportedName": "formatMetadataHeaders",
       "filename": "node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
     },
-    "008bd30f1b4fe6893e3c82ea57bcc04701a4b3c29f": {
+    "00229824e7a714869a9cb2e708b2f2eb5bef59560c": {
       "workers": {
         "app/page": {
           "moduleId": 1470,
@@ -66,7 +66,7 @@
       "exportedName": "deleteKeylessAction",
       "filename": "node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
     },
-    "40a3a4a50153d002a502f89ab80effb78d7c5cf69f": {
+    "401ad7586c007e099a2faa15ab30bb68159a5d4348": {
       "workers": {
         "app/page": {
           "moduleId": 1470,

@@ -1,115 +1,245 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { PROJECTS, ProjectCode } from "@/lib/project-config";
-import { Plane, Bot, Table as TableIcon, Bell, ChevronDown, CheckCircle2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { ProjectCode, PROJECTS } from "@/lib/project-config";
+import {
+  FolderKanban,
+  Bot,
+  Database,
+  Bell,
+  CheckCircle2,
+  BellOff,
+  User as UserIcon,
+  ChevronDown,
+  Layers,
+  Settings,
+} from "lucide-react";
+import { toast } from "sonner";
 
 interface HeaderProps {
   currentProject: ProjectCode;
 }
 
 export function Header({ currentProject }: HeaderProps) {
-  const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [projectMenuOpen, setProjectMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [emailAlertsOptIn, setEmailAlertsOptIn] = useState<boolean>(true);
+  const [userEmail, setUserEmail] = useState<string>("engineer@taskpilot.io");
+  const [userTitle, setUserTitle] = useState<string>("Senior Operations Engineer");
 
   const activeProject = PROJECTS.find((p) => p.code === currentProject) || PROJECTS[0];
 
-  const handleProjectChange = (code: ProjectCode) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("project", code);
-    params.set("page", "1");
-    router.push(`${pathname}?${params.toString()}`);
+  // Fetch user preference on mount
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const res = await fetch(`/api/users?email=${userEmail}`);
+        const data = await res.json();
+        if (data.user) {
+          setEmailAlertsOptIn(data.user.receiveEmailAlerts);
+          if (data.user.title) setUserTitle(data.user.title);
+        }
+      } catch (err) {
+        // Fallback to true
+      }
+    }
+    loadUser();
+  }, [userEmail]);
+
+  // Toggle Email Alerts preference
+  const toggleEmailOptIn = async () => {
+    const nextVal = !emailAlertsOptIn;
+    setEmailAlertsOptIn(nextVal);
+
+    try {
+      const res = await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: userEmail,
+          name: "Current Engineer",
+          title: userTitle,
+          receiveEmailAlerts: nextVal,
+          projects: ["CMS_VAL_FS", "ASR", "CIAS"],
+        }),
+      });
+
+      if (res.ok) {
+        if (nextVal) {
+          toast.success("Subscribed to Team Email Alerts", {
+            description: "You will receive email notifications when new incident resolutions are logged.",
+          });
+        } else {
+          toast.info("Opted out of Email Alerts", {
+            description: "You will no longer receive broadcast emails for newly logged incidents.",
+          });
+        }
+      }
+    } catch (err) {
+      toast.error("Failed to update notification preferences.");
+    }
   };
 
   return (
-    <header className="bg-slate-900 border-b border-slate-800 text-white px-6 py-3 sticky top-0 z-40 flex items-center justify-between shadow-md">
-      {/* Left: Brand + Project Selector */}
-      <div className="flex items-center space-x-6">
-        <Link href={`/?project=${currentProject}`} className="flex items-center space-x-2.5 group">
-          <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:bg-indigo-500 transition">
-            <Plane className="w-5 h-5 text-white transform -rotate-45" />
-          </div>
-          <div>
-            <div className="font-bold text-base tracking-tight flex items-center space-x-1.5">
-              <span>TaskPilot</span>
-              <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.2 bg-indigo-950 text-indigo-300 border border-indigo-700/60 rounded">
-                Enterprise
+    <header className="sticky top-0 z-40 bg-white border-b border-slate-200/80 backdrop-blur-md bg-white/90">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        {/* Left Section: Logo & Project Switcher Dropdown */}
+        <div className="flex items-center space-x-6">
+          <Link href={`/?project=${currentProject}`} className="flex items-center space-x-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-600/20">
+              <FolderKanban className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-base font-extrabold tracking-tight bg-gradient-to-r from-slate-900 to-indigo-950 bg-clip-text text-transparent">
+                TaskPilot
+              </span>
+              <span className="block text-[10px] font-semibold text-indigo-600 uppercase tracking-widest -mt-1">
+                Ops Platform
               </span>
             </div>
-            <p className="text-[11px] text-slate-400">Incident & Knowledge Copilot</p>
-          </div>
-        </Link>
+          </Link>
 
-        {/* Global Project Dropdown Selector */}
-        <div className="relative group">
-          <div className="flex items-center space-x-2 bg-slate-800/90 hover:bg-slate-800 border border-slate-700/80 rounded-xl px-3 py-1.5 cursor-pointer transition">
-            <span className="text-xs text-slate-400 font-medium">Project:</span>
-            <span className="text-xs font-semibold text-white">{activeProject.name}</span>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-          </div>
+          {/* Project Selector Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setProjectMenuOpen(!projectMenuOpen)}
+              className="flex items-center space-x-2 text-xs font-semibold px-3 py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 bg-slate-50/80 hover:bg-slate-100 transition shadow-2xs"
+            >
+              <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
+              <span className="text-slate-800 font-bold">{activeProject.name}</span>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+            </button>
 
-          <div className="absolute left-0 mt-1.5 w-64 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1.5 hidden group-hover:block z-50">
-            <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800">
-              Select Workspace Project
-            </div>
-            {PROJECTS.map((p) => (
-              <button
-                key={p.code}
-                onClick={() => handleProjectChange(p.code)}
-                className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-800/80 transition ${
-                  p.code === currentProject ? "bg-indigo-950/60 text-indigo-300 font-semibold" : "text-slate-300"
-                }`}
-              >
-                <div>
-                  <div>{p.name}</div>
-                  <div className="text-[10px] text-slate-500 line-clamp-1">{p.description}</div>
+            {projectMenuOpen && (
+              <div className="absolute left-0 mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl py-2 z-50">
+                <div className="px-3.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Select Active Workspace
                 </div>
-                {p.code === currentProject && <CheckCircle2 className="w-4 h-4 text-indigo-400 flex-shrink-0 ml-2" />}
-              </button>
-            ))}
+                {PROJECTS.map((proj) => (
+                  <Link
+                    key={proj.code}
+                    href={`/?project=${proj.code}`}
+                    onClick={() => setProjectMenuOpen(false)}
+                    className={`block px-3.5 py-2.5 text-xs hover:bg-slate-50 transition ${
+                      proj.code === currentProject ? "bg-indigo-50/60 font-bold text-indigo-700" : "text-slate-700"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>{proj.name}</span>
+                      <span className="text-[10px] font-normal px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                        {proj.badge}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-normal mt-0.5">{proj.description}</p>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-      </div>
 
-      {/* Center: Navigation Links */}
-      <nav className="flex items-center space-x-1 bg-slate-800/60 p-1 rounded-xl border border-slate-800">
-        <Link
-          href={`/?project=${currentProject}`}
-          className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium transition ${
-            pathname === "/" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-300 hover:text-white hover:bg-slate-800"
-          }`}
-        >
-          <TableIcon className="w-3.5 h-3.5" />
-          <span>Resolution Records</span>
-        </Link>
-        <Link
-          href={`/agent?project=${currentProject}`}
-          className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium transition ${
-            pathname === "/agent" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-300 hover:text-white hover:bg-slate-800"
-          }`}
-        >
-          <Bot className="w-3.5 h-3.5 text-indigo-400" />
-          <span>Agent Studio</span>
-        </Link>
-      </nav>
+        {/* Center / Navigation Links */}
+        <nav className="hidden md:flex items-center space-x-1">
+          <Link
+            href={`/?project=${currentProject}`}
+            className="px-3.5 py-1.5 text-xs font-semibold rounded-xl text-slate-700 hover:bg-slate-100 transition flex items-center space-x-1.5"
+          >
+            <Layers className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Resolutions</span>
+          </Link>
+          <Link
+            href={`/agent?project=${currentProject}`}
+            className="px-3.5 py-1.5 text-xs font-semibold rounded-xl text-slate-700 hover:bg-slate-100 transition flex items-center space-x-1.5"
+          >
+            <Bot className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Agent Studio</span>
+          </Link>
+        </nav>
 
-      {/* Right: User Attribution / Live Sync */}
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-2 text-xs bg-slate-800/80 border border-slate-700/60 px-3 py-1.5 rounded-lg">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span className="text-slate-300 text-[11px]">Sync: Supabase</span>
-        </div>
+        {/* Right Section: Notification Tick Mark, DB status & Profile Dropdown */}
+        <div className="flex items-center space-x-3">
+          {/* Email Notification Opt-In / Opt-Out Tick Mark */}
+          <button
+            onClick={toggleEmailOptIn}
+            title={emailAlertsOptIn ? "Email alerts enabled (Click to opt out)" : "Email alerts disabled (Click to receive)"}
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition border ${
+              emailAlertsOptIn
+                ? "bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100"
+                : "bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200"
+            }`}
+          >
+            {emailAlertsOptIn ? (
+              <>
+                <Bell className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="hidden sm:inline">Alerts: Active</span>
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              </>
+            ) : (
+              <>
+                <BellOff className="w-3.5 h-3.5 text-slate-400" />
+                <span className="hidden sm:inline">Alerts: Opted Out</span>
+              </>
+            )}
+          </button>
 
-        <div className="flex items-center space-x-2.5 pl-2 border-l border-slate-800">
-          <div className="w-7 h-7 rounded-full bg-indigo-500/20 border border-indigo-400/40 text-indigo-300 flex items-center justify-center font-bold text-xs">
-            OP
+          {/* Database Sync Status */}
+          <div className="hidden lg:flex items-center space-x-1.5 text-[11px] font-medium text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200/80">
+            <Database className="w-3 h-3 text-indigo-600" />
+            <span>SQLite Active</span>
           </div>
-          <div className="text-left hidden sm:block">
-            <div className="text-xs font-semibold text-slate-200">Ops Engineer</div>
-            <div className="text-[10px] text-slate-400">Team NOC Lead</div>
+
+          {/* User Profile Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setUserMenuOpen(!userMenuOpen)}
+              className="flex items-center space-x-2 p-1.5 rounded-xl hover:bg-slate-100 transition"
+            >
+              <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                {userEmail.slice(0, 2).toUpperCase()}
+              </div>
+            </button>
+
+            {userMenuOpen && (
+              <div className="absolute right-0 mt-2 w-72 bg-white border border-slate-200 rounded-2xl shadow-xl p-4 z-50">
+                <div className="flex items-center space-x-3 pb-3 border-b border-slate-100">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm">
+                    {userEmail.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="text-xs font-bold text-slate-900 truncate">{userEmail}</p>
+                    <p className="text-[10px] text-slate-500 truncate">{userTitle}</p>
+                  </div>
+                </div>
+
+                <div className="py-3 space-y-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-slate-700">Team Email Alerts</span>
+                    <button
+                      onClick={toggleEmailOptIn}
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                        emailAlertsOptIn ? "bg-indigo-600" : "bg-slate-300"
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                          emailAlertsOptIn ? "translate-x-4.5" : "translate-x-0.5"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-slate-400 leading-tight">
+                    When checked, you will receive email notifications whenever a resolution is recorded for your assigned projects.
+                  </p>
+                </div>
+
+                <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-500">
+                  Role: <span className="font-bold text-slate-800">Engineer / NOC Lead</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

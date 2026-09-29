@@ -60,6 +60,12 @@
       "namedRegex": "^/api/tasks(?:/)?$"
     },
     {
+      "page": "/api/users",
+      "regex": "^/api/users(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/users(?:/)?$"
+    },
+    {
       "page": "/sign-in",
       "regex": "^/sign\\-in(?:/)?$",
       "routeKeys": {},
