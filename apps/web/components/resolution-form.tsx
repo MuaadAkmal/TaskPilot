@@ -1,7 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ProjectCode, PROJECTS, STATUS_OPTIONS, TSPS, LSAS } from "@/lib/project-config";
+import {
+  ProjectCode,
+  PROJECTS,
+  STATUS_OPTIONS,
+  CMS_LSA_LIST,
+  CMS_LSA_TSP_MAP,
+  CMS_LSA_FULL_NAMES,
+} from "@/lib/project-config";
 import { Plus, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 
@@ -15,8 +22,8 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
   const raisedByList = activeProjectMeta.fields.raisedByOptions || [];
 
   const [isOpen, setIsOpen] = useState<boolean>(true);
-  const [tspVal, setTspVal] = useState<string>(activeProjectMeta.fields.primaryOptions[0] || "");
-  const [lsaVal, setLsaVal] = useState<string>(activeProjectMeta.fields.secondaryOptions[0] || "");
+  const [tspVal, setTspVal] = useState<string>("");
+  const [lsaVal, setLsaVal] = useState<string>("");
   const [status, setStatus] = useState<string>("RESOLVED");
   const [raisedByName, setRaisedByName] = useState<string>(raisedByList[0] || "DOT");
   const [problemDescription, setProblemDescription] = useState<string>("");
@@ -26,16 +33,36 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
   const [resolvedAt, setResolvedAt] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
+  const isCMS = project === "CMS" || (project as string) === "CMS_VAL_FS";
   const isTsoc = project === "TSOC";
   const isMcx = project === "MCX";
   const isCias = project === "CIAS";
   const isCdrOrIpdr = project === "CDR" || project === "IPDR";
 
+  // When project or activeProjectMeta changes, initialize LSA & TSP
   useEffect(() => {
-    setTspVal(activeProjectMeta.fields.primaryOptions[0] || "");
-    setLsaVal(activeProjectMeta.fields.secondaryOptions[0] || "");
+    if (isCMS || isCdrOrIpdr) {
+      const defaultLsa = CMS_LSA_LIST[0] || "KR";
+      setLsaVal(defaultLsa);
+      const availableTsps = CMS_LSA_TSP_MAP[defaultLsa] || ["AT"];
+      setTspVal(availableTsps[0]);
+    } else {
+      setTspVal(activeProjectMeta.fields.primaryOptions[0] || "");
+      setLsaVal(activeProjectMeta.fields.secondaryOptions[0] || "");
+    }
     setRaisedByName(activeProjectMeta.fields.raisedByOptions[0] || "DOT");
-  }, [project, activeProjectMeta]);
+  }, [project, isCMS, isCdrOrIpdr, activeProjectMeta]);
+
+  // When LSA changes in CMS / CDR / IPDR, automatically adjust available TSPs
+  const handleLsaChange = (newLsa: string) => {
+    setLsaVal(newLsa);
+    if (isCMS || isCdrOrIpdr) {
+      const availableTsps = CMS_LSA_TSP_MAP[newLsa] || [];
+      if (!availableTsps.includes(tspVal)) {
+        setTspVal(availableTsps[0] || "");
+      }
+    }
+  };
 
   useEffect(() => {
     const now = new Date();
@@ -104,6 +131,12 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
     }
   };
 
+  // Determine current available TSP options
+  const currentTspOptions =
+    isCMS || isCdrOrIpdr
+      ? CMS_LSA_TSP_MAP[lsaVal] || ["AT", "BS", "RC", "RI", "VO", "TA"]
+      : activeProjectMeta.fields.primaryOptions;
+
   return (
     <div
       className="bg-white dark:bg-slate-900/90 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-card mb-6 transition-all overflow-hidden"
@@ -138,7 +171,90 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           {/* Metadata Row */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {isCdrOrIpdr ? (
+            {isCMS ? (
+              <>
+                {/* CMS Dependent LSA -> TSP selection */}
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                    LSA (Circle)
+                  </label>
+                  <select
+                    value={lsaVal}
+                    onChange={(e) => handleLsaChange(e.target.value)}
+                    className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition font-semibold"
+                  >
+                    {CMS_LSA_LIST.map((lsa) => (
+                      <option key={lsa} value={lsa}>
+                        {CMS_LSA_FULL_NAMES[lsa] || lsa}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                    TSP (Provider in {lsaVal})
+                  </label>
+                  <select
+                    value={tspVal}
+                    onChange={(e) => setTspVal(e.target.value)}
+                    className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition font-semibold"
+                  >
+                    {currentTspOptions.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                    Date & Time
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={resolvedAt}
+                    onChange={(e) => setResolvedAt(e.target.value)}
+                    className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                    Status
+                  </label>
+                  <select
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                    className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
+                  >
+                    {STATUS_OPTIONS.map((s) => (
+                      <option key={s.value} value={s.value}>
+                        {s.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="col-span-2 md:col-span-4">
+                  <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                    Request Raised By (LEA)
+                  </label>
+                  <select
+                    value={raisedByName}
+                    onChange={(e) => setRaisedByName(e.target.value)}
+                    className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition font-medium"
+                  >
+                    {raisedByList.map((lea) => (
+                      <option key={lea} value={lea}>
+                        {lea}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            ) : isCdrOrIpdr ? (
               <>
                 {/* CDR / IPDR Layout: LSA, TSP, DATE, STATUS, REQUEST RAISED BY */}
                 <div>
@@ -147,12 +263,12 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
                   </label>
                   <select
                     value={lsaVal}
-                    onChange={(e) => setLsaVal(e.target.value)}
+                    onChange={(e) => handleLsaChange(e.target.value)}
                     className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
                   >
-                    {LSAS.map((l) => (
+                    {CMS_LSA_LIST.map((l) => (
                       <option key={l} value={l}>
-                        {l}
+                        {CMS_LSA_FULL_NAMES[l] || l}
                       </option>
                     ))}
                   </select>
@@ -160,14 +276,14 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
 
                 <div>
                   <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
-                    TSP (Provider)
+                    TSP (Provider in {lsaVal})
                   </label>
                   <select
                     value={tspVal}
                     onChange={(e) => setTspVal(e.target.value)}
-                    className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
+                    className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition font-semibold"
                   >
-                    {TSPS.map((t) => (
+                    {currentTspOptions.map((t) => (
                       <option key={t} value={t}>
                         {t}
                       </option>
@@ -289,7 +405,7 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
               </>
             ) : (
               <>
-                {/* Default CMS / TSOC / MCX Layout */}
+                {/* Default TSOC / MCX Layout */}
                 <div>
                   <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
                     Date & Time
