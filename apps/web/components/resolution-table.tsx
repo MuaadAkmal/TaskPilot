@@ -372,18 +372,20 @@ export function ResolutionTable({
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-1.5">
-          <select
-            value={tsp}
-            onChange={(e) => setTsp(e.target.value)}
-            className="text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-2 py-1.5 text-slate-700 dark:text-slate-200 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
-          >
-            <option value="ALL">All {activeProjectMeta.fields.primaryFieldLabel}</option>
-            {activeProjectMeta.fields.primaryOptions.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
-            ))}
-          </select>
+          {!isTsoc && !isMcx && (
+            <select
+              value={tsp}
+              onChange={(e) => setTsp(e.target.value)}
+              className="text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-2 py-1.5 text-slate-700 dark:text-slate-200 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
+            >
+              <option value="ALL">All {activeProjectMeta.fields.primaryFieldLabel}</option>
+              {activeProjectMeta.fields.primaryOptions.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+          )}
 
           <select
             value={sort}

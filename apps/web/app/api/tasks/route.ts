@@ -181,9 +181,12 @@ export async function POST(req: Request) {
       resolvedAt,
     } = body;
 
-    if (!tsp || !lsa || !problemDescription || !solution) {
+    const finalTsp = tsp || (project === "TSOC" || project === "MCX" ? "-" : "");
+    const finalLsa = lsa || (project === "TSOC" || project === "MCX" || project === "CIAS" ? "-" : "");
+
+    if (!finalTsp || !finalLsa || !problemDescription || !solution) {
       return NextResponse.json(
-        { error: "Missing required fields: tsp, lsa, problemDescription, solution." },
+        { error: "Missing required fields: problemDescription, solution." },
         { status: 400 }
       );
     }
@@ -201,8 +204,8 @@ export async function POST(req: Request) {
       const dbTask = await prisma.taskResolution.create({
         data: {
           project: project === "CMS_VAL_FS" ? "CMS" : project,
-          tsp,
-          lsa,
+          tsp: finalTsp,
+          lsa: finalLsa,
           status,
           raisedByName,
           createdByName,
@@ -238,8 +241,8 @@ export async function POST(req: Request) {
       console.warn("DB insert failed, writing to fallback memory store:", dbError);
       createdTask = taskStore.create({
         project,
-        tsp,
-        lsa,
+        tsp: finalTsp,
+        lsa: finalLsa,
         status,
         raisedByName,
         createdByName,
