@@ -34,10 +34,12 @@ function DashboardContent() {
   const [endDate, setEndDate] = useState<string>("");
   const [sort, setSort] = useState<string>("resolvedAt_desc");
 
-  // CMS, TSOC, MCX, and CIAS have active forms & tables enabled
+  // CMS, CDR, IPDR, CIAS, TSOC, and MCX have active forms & tables enabled
   const hasActiveTable =
     currentProject === "CMS" ||
     (currentProject as string) === "CMS_VAL_FS" ||
+    currentProject === "CDR" ||
+    currentProject === "IPDR" ||
     currentProject === "TSOC" ||
     currentProject === "MCX" ||
     currentProject === "CIAS";
@@ -149,7 +151,7 @@ function DashboardContent() {
           <>
             {hasActiveTable ? (
               <>
-                {/* Active form + paginated resolution table for CMS, CIAS, TSOC & MCX */}
+                {/* Active form + paginated resolution table for CMS, CDR, IPDR, CIAS, TSOC & MCX */}
                 <ResolutionForm project={currentProject} onRecordCreated={fetchTasks} />
                 <ResolutionTable
                   currentProject={currentProject}
@@ -175,7 +177,7 @@ function DashboardContent() {
                 />
               </>
             ) : (
-              /* Other modules (CDR, IPDR, ASR): Clean placeholder awaiting custom schema discussion */
+              /* ASR: Clean placeholder awaiting custom schema discussion */
               <div className="bg-white dark:bg-slate-900/90 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-card p-8 text-center">
                 <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center mx-auto mb-3">
                   <Clock className="w-6 h-6" />

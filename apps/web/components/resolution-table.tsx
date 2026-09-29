@@ -71,6 +71,7 @@ export function ResolutionTable({
   const isTsoc = currentProject === "TSOC";
   const isMcx = currentProject === "MCX";
   const isCias = currentProject === "CIAS";
+  const isCdrOrIpdr = currentProject === "CDR" || currentProject === "IPDR";
 
   const handleExportCSV = (scope: "filtered" | "all") => {
     const dataToExport = scope === "filtered" ? tasks : allTasks;
@@ -80,6 +81,19 @@ export function ResolutionTable({
     }
 
     const rows = dataToExport.map((t) => {
+      if (isCdrOrIpdr) {
+        return {
+          "Ticket ID": t.id,
+          LSA: t.lsa,
+          TSP: t.tsp,
+          DATE: t.resolvedAt || t.createdAt,
+          STATUS: t.status,
+          "REQUEST RAISED BY": t.raisedByName,
+          "PROBLEM DESCRIPTION": t.problemDescription,
+          SOLUTION: t.solution,
+          REMARKS: t.remarks || "",
+        };
+      }
       if (isCias) {
         return {
           "Ticket ID": t.id,
@@ -146,7 +160,28 @@ export function ResolutionTable({
     doc.setTextColor(100);
     doc.text(`Generated: ${new Date().toLocaleString()} | Total Records: ${dataToExport.length}`, 14, 21);
 
-    if (isCias) {
+    if (isCdrOrIpdr) {
+      const tableRows = dataToExport.map((t) => [
+        t.id,
+        t.lsa,
+        t.tsp,
+        new Date(t.resolvedAt || t.createdAt).toLocaleDateString(),
+        t.status,
+        t.raisedByName,
+        t.problemDescription.slice(0, 35) + "...",
+        t.solution.slice(0, 35) + "...",
+        t.remarks || "-",
+      ]);
+
+      autoTable(doc, {
+        startY: 26,
+        head: [["ID", "LSA", "TSP", "DATE", "STATUS", "REQUEST RAISED BY", "PROBLEM DESCRIPTION", "SOLUTION", "REMARKS"]],
+        body: tableRows,
+        theme: "plain",
+        headStyles: { fillColor: [240, 240, 240], textColor: [40, 40, 40], fontStyle: "bold" },
+        styles: { fontSize: 8, cellPadding: 2.5 },
+      });
+    } else if (isCias) {
       const tableRows = dataToExport.map((t) => [
         t.id,
         t.tsp,
@@ -277,7 +312,21 @@ export function ResolutionTable({
       <div className="overflow-x-auto min-h-[360px]">
         <table className="w-full text-left text-xs">
           <thead>
-            {isCias ? (
+            {isCdrOrIpdr ? (
+              /* CDR & IPDR Columns: LSA, TSP, DATE, STATUS, REQUEST RAISED BY, PROBLEM DESCRIPTION, SOLUTION, REMARKS */
+              <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 text-[11px] font-medium text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+                <th className="py-2.5 px-3.5 w-14">#</th>
+                <th className="py-2.5 px-3 w-28">LSA</th>
+                <th className="py-2.5 px-3 w-28">TSP</th>
+                <th className="py-2.5 px-3 w-28">DATE</th>
+                <th className="py-2.5 px-3 w-24 text-center">STATUS</th>
+                <th className="py-2.5 px-3 w-36">REQUEST RAISED BY</th>
+                <th className="py-2.5 px-4">PROBLEM DESCRIPTION</th>
+                <th className="py-2.5 px-4">SOLUTION</th>
+                <th className="py-2.5 px-3 w-32">REMARKS</th>
+                <th className="py-2.5 px-3 w-16 text-right"></th>
+              </tr>
+            ) : isCias ? (
               /* CIAS Exact Column Layout: Device Location, Status, Request Raised By, Date, Problem, Solution, Remarks */
               <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 text-[11px] font-medium text-slate-400 dark:text-slate-400 uppercase tracking-wider">
                 <th className="py-2.5 px-3.5 w-14">#</th>
@@ -318,7 +367,7 @@ export function ResolutionTable({
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {tasks.length === 0 ? (
               <tr>
-                <td colSpan={isCias ? 9 : 8} className="py-14 text-center text-slate-400 dark:text-slate-500">
+                <td colSpan={isCdrOrIpdr ? 10 : isCias ? 9 : 8} className="py-14 text-center text-slate-400 dark:text-slate-500">
                   <Filter className="w-6 h-6 mx-auto mb-1 text-slate-300 dark:text-slate-600" />
                   <p className="text-xs font-medium text-slate-600 dark:text-slate-300">No records found</p>
                 </td>
@@ -331,7 +380,57 @@ export function ResolutionTable({
                     #{task.id}
                   </td>
 
-                  {isCias ? (
+                  {isCdrOrIpdr ? (
+                    <>
+                      {/* LSA */}
+                      <td className="py-3 px-3 font-semibold text-slate-900 dark:text-slate-100 text-xs">
+                        {task.lsa}
+                      </td>
+
+                      {/* TSP */}
+                      <td className="py-3 px-3 font-medium text-slate-700 dark:text-slate-300 text-xs">
+                        {task.tsp}
+                      </td>
+
+                      {/* DATE */}
+                      <td className="py-3 px-3 text-slate-600 dark:text-slate-400 text-[11px] whitespace-nowrap">
+                        {new Date(task.resolvedAt || task.createdAt).toLocaleDateString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </td>
+
+                      {/* STATUS */}
+                      <td className="py-3 px-3 text-center">
+                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/60">
+                          {task.status}
+                        </span>
+                      </td>
+
+                      {/* REQUEST RAISED BY */}
+                      <td className="py-3 px-3 font-semibold text-slate-800 dark:text-slate-200 text-xs">
+                        {task.raisedByName}
+                      </td>
+
+                      {/* PROBLEM DESCRIPTION */}
+                      <td className="py-3 px-4 max-w-xs">
+                        <p className="font-normal text-slate-800 dark:text-slate-200 line-clamp-2">
+                          {task.problemDescription}
+                        </p>
+                      </td>
+
+                      {/* SOLUTION */}
+                      <td className="py-3 px-4 max-w-xs font-mono text-[11px] text-slate-700 dark:text-slate-300">
+                        <p className="line-clamp-2">{task.solution}</p>
+                      </td>
+
+                      {/* REMARKS */}
+                      <td className="py-3 px-3 text-slate-500 dark:text-slate-400 text-[11px] max-w-[120px] truncate">
+                        {task.remarks || "-"}
+                      </td>
+                    </>
+                  ) : isCias ? (
                     <>
                       {/* Device Location */}
                       <td className="py-3 px-3 font-semibold text-slate-900 dark:text-slate-100 text-xs">
