@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { MockTask } from "@/lib/store";
 import {
   ProjectCode,
@@ -26,6 +26,9 @@ import {
   AlertCircle,
   HelpCircle,
   XCircle,
+  CheckSquare,
+  Square,
+  SlidersHorizontal,
 } from "lucide-react";
 import Papa from "papaparse";
 import jsPDF from "jspdf";
@@ -57,6 +60,12 @@ interface ResolutionTableProps {
   setSort: (s: string) => void;
 }
 
+interface ColumnDef {
+  id: string;
+  label: string;
+  getValue: (t: MockTask, projectMeta: any) => string | number;
+}
+
 export function ResolutionTable({
   tasks,
   allTasks,
@@ -83,7 +92,8 @@ export function ResolutionTable({
   const [selectedTaskForEdit, setSelectedTaskForEdit] = useState<MockTask | null>(null);
   const [selectedTaskForDetail, setSelectedTaskForDetail] = useState<MockTask | null>(null);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
-  const [dateRangeModalOpen, setDateRangeModalOpen] = useState(false);
+  const [exportConfigModalOpen, setExportConfigModalOpen] = useState(false);
+  const [exportScope, setExportScope] = useState<"current" | "all" | "date_range">("all");
   const [exportFormat, setExportFormat] = useState<"csv" | "pdf">("csv");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -92,6 +102,78 @@ export function ResolutionTable({
   const isMcx = currentProject === "MCX";
   const isCias = currentProject === "CIAS";
   const isCdrOrIpdr = currentProject === "CDR" || currentProject === "IPDR";
+
+  // Define columns available for export based on active project
+  const availableColumns: ColumnDef[] = React.useMemo(() => {
+    if (isCdrOrIpdr) {
+      return [
+        { id: "id", label: "Ticket ID", getValue: (t) => t.id },
+        { id: "lsa", label: "LSA", getValue: (t) => t.lsa },
+        { id: "tsp", label: "TSP", getValue: (t) => t.tsp },
+        { id: "date", label: "DATE", getValue: (t) => new Date(t.resolvedAt || t.createdAt).toLocaleDateString() },
+        { id: "status", label: "STATUS", getValue: (t) => t.status },
+        { id: "raisedByName", label: "REQUEST RAISED BY", getValue: (t) => t.raisedByName },
+        { id: "problemDescription", label: "PROBLEM DESCRIPTION", getValue: (t) => t.problemDescription },
+        { id: "solution", label: "SOLUTION", getValue: (t) => t.solution },
+        { id: "remarks", label: "REMARKS", getValue: (t) => t.remarks || "" },
+      ];
+    }
+    if (isCias) {
+      return [
+        { id: "id", label: "Ticket ID", getValue: (t) => t.id },
+        { id: "tsp", label: "Device Location", getValue: (t) => t.tsp },
+        { id: "status", label: "Status", getValue: (t) => t.status },
+        { id: "raisedByName", label: "Request Raised By", getValue: (t) => t.raisedByName },
+        { id: "date", label: "Date", getValue: (t) => new Date(t.resolvedAt || t.createdAt).toLocaleDateString() },
+        { id: "problemDescription", label: "Problem", getValue: (t) => t.problemDescription },
+        { id: "solution", label: "Solution", getValue: (t) => t.solution },
+        { id: "remarks", label: "Remarks", getValue: (t) => t.remarks || "" },
+      ];
+    }
+    if (isTsoc || isMcx) {
+      return [
+        { id: "id", label: "Ticket ID", getValue: (t) => t.id },
+        { id: "date", label: "DATE", getValue: (t) => new Date(t.resolvedAt || t.createdAt).toLocaleDateString() },
+        { id: "status", label: "STATUS", getValue: (t) => t.status },
+        { id: "raisedByName", label: "REQUEST RAISED BY", getValue: (t) => t.raisedByName },
+        { id: "problemDescription", label: "PROBLEM DESCRIPTION", getValue: (t) => t.problemDescription },
+        { id: "solution", label: "SOLUTION", getValue: (t) => t.solution },
+        { id: "remarks", label: "REMARKS", getValue: (t) => t.remarks || "" },
+      ];
+    }
+    // Default CMS columns
+    return [
+      { id: "id", label: "Ticket ID", getValue: (t) => t.id },
+      { id: "project", label: "Project", getValue: (t) => t.project },
+      { id: "tsp", label: activeProjectMeta.fields.primaryFieldLabel, getValue: (t) => t.tsp },
+      { id: "lsa", label: activeProjectMeta.fields.secondaryFieldLabel, getValue: (t) => t.lsa },
+      { id: "status", label: "Status", getValue: (t) => t.status },
+      { id: "raisedByName", label: "Request Raised By", getValue: (t) => t.raisedByName },
+      { id: "createdAt", label: "Created At", getValue: (t) => new Date(t.createdAt).toLocaleString() },
+      { id: "resolvedAt", label: "Resolved At", getValue: (t) => (t.resolvedAt ? new Date(t.resolvedAt).toLocaleString() : "") },
+      { id: "downtimeMinutes", label: "Downtime (Minutes)", getValue: (t) => t.downtimeMinutes || 0 },
+      { id: "problemDescription", label: "Problem description / Activity Detail", getValue: (t) => t.problemDescription },
+      { id: "solution", label: "Solution Applied", getValue: (t) => t.solution },
+      { id: "remarks", label: "Remarks", getValue: (t) => t.remarks || "" },
+    ];
+  }, [currentProject, isCdrOrIpdr, isCias, isTsoc, isMcx, activeProjectMeta]);
+
+  // Selected column IDs for export (default all selected)
+  const [selectedColumnIds, setSelectedColumnIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    setSelectedColumnIds(availableColumns.map((c) => c.id));
+  }, [availableColumns]);
+
+  const toggleColumnSelection = (id: string) => {
+    setSelectedColumnIds((prev) =>
+      prev.includes(id) ? (prev.length > 1 ? prev.filter((colId) => colId !== id) : prev) : [...prev, id]
+    );
+  };
+
+  const selectAllColumns = () => {
+    setSelectedColumnIds(availableColumns.map((c) => c.id));
+  };
 
   const filterByDateRange = (list: MockTask[]) => {
     if (!startDate && !endDate) return list;
@@ -109,196 +191,84 @@ export function ResolutionTable({
     });
   };
 
-  const handleExportCSV = (scope: "filtered" | "all" | "custom_range") => {
-    let rawList = scope === "filtered" ? tasks : allTasks;
-    if (scope === "custom_range") {
-      rawList = filterByDateRange(allTasks.length > 0 ? allTasks : tasks);
-    }
-
-    if (rawList.length === 0) {
-      toast.error("No records found in the specified criteria to export.");
-      return;
-    }
-
-    const rows = rawList.map((t) => {
-      if (isCdrOrIpdr) {
-        return {
-          "Ticket ID": t.id,
-          LSA: t.lsa,
-          TSP: t.tsp,
-          DATE: t.resolvedAt || t.createdAt,
-          STATUS: t.status,
-          "REQUEST RAISED BY": t.raisedByName,
-          "PROBLEM DESCRIPTION": t.problemDescription,
-          SOLUTION: t.solution,
-          REMARKS: t.remarks || "",
-        };
-      }
-      if (isCias) {
-        return {
-          "Ticket ID": t.id,
-          "Device Location": t.tsp,
-          Status: t.status,
-          "Request Raised By": t.raisedByName,
-          Date: t.resolvedAt || t.createdAt,
-          Problem: t.problemDescription,
-          Solution: t.solution,
-          Remarks: t.remarks || "",
-        };
-      }
-      if (isTsoc || isMcx) {
-        return {
-          "Ticket ID": t.id,
-          DATE: t.resolvedAt || t.createdAt,
-          STATUS: t.status,
-          "REQUEST RAISED BY": t.raisedByName,
-          "PROBLEM DESCRIPTION": t.problemDescription,
-          SOLUTION: t.solution,
-          REMARKS: t.remarks || "",
-        };
-      }
-      return {
-        "Ticket ID": t.id,
-        Project: t.project,
-        [activeProjectMeta.fields.primaryFieldLabel]: t.tsp,
-        [activeProjectMeta.fields.secondaryFieldLabel]: t.lsa,
-        Status: t.status,
-        "Request Raised By": t.raisedByName,
-        "Created At": t.createdAt,
-        "Resolved At": t.resolvedAt || "",
-        "Downtime (Minutes)": t.downtimeMinutes || 0,
-        "Problem description / Activity Detail": t.problemDescription,
-        "Solution Applied": t.solution,
-        Remarks: t.remarks || "",
-      };
-    });
-
-    const csv = Papa.unparse(rows);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `taskpilot_${currentProject}_${scope}_${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setExportMenuOpen(false);
-    setDateRangeModalOpen(false);
-    toast.success(`Exported ${rawList.length} records to CSV.`);
-  };
-
-  const handleExportPDF = (scope: "all" | "custom_range" = "all") => {
-    let dataToExport = allTasks.length > 0 ? allTasks : tasks;
-    if (scope === "custom_range") {
-      dataToExport = filterByDateRange(dataToExport);
-    }
-
-    if (dataToExport.length === 0) {
-      toast.error("No records found in the specified criteria to export.");
-      return;
-    }
-
-    const doc = new jsPDF({ orientation: "landscape" });
-    doc.setFontSize(14);
-    doc.text(`TaskPilot - ${activeProjectMeta.name} Incident Report`, 14, 15);
-    doc.setFontSize(9);
-    doc.setTextColor(100);
-    const dateRangeNote = startDate || endDate ? ` | Range: ${startDate || 'Start'} to ${endDate || 'Now'}` : '';
-    doc.text(`Generated: ${new Date().toLocaleString()} | Total Records: ${dataToExport.length}${dateRangeNote}`, 14, 21);
-
-    if (isCdrOrIpdr) {
-      const tableRows = dataToExport.map((t) => [
-        t.id,
-        t.lsa,
-        t.tsp,
-        new Date(t.resolvedAt || t.createdAt).toLocaleDateString(),
-        t.status,
-        t.raisedByName,
-        t.problemDescription.slice(0, 40) + "...",
-        t.solution.slice(0, 40) + "...",
-        t.remarks || "-",
-      ]);
-
-      autoTable(doc, {
-        startY: 26,
-        head: [["ID", "LSA", "TSP", "DATE", "STATUS", "RAISED BY", "PROBLEM DESCRIPTION", "SOLUTION", "REMARKS"]],
-        body: tableRows,
-        theme: "plain",
-        headStyles: { fillColor: [240, 240, 240], textColor: [40, 40, 40], fontStyle: "bold" },
-        styles: { fontSize: 8, cellPadding: 2.5 },
-      });
-    } else if (isCias) {
-      const tableRows = dataToExport.map((t) => [
-        t.id,
-        t.tsp,
-        t.status,
-        t.raisedByName,
-        new Date(t.resolvedAt || t.createdAt).toLocaleDateString(),
-        t.problemDescription.slice(0, 45) + "...",
-        t.solution.slice(0, 45) + "...",
-        t.remarks || "-",
-      ]);
-
-      autoTable(doc, {
-        startY: 26,
-        head: [["ID", "DEVICE LOCATION", "STATUS", "RAISED BY", "DATE", "PROBLEM", "SOLUTION", "REMARKS"]],
-        body: tableRows,
-        theme: "plain",
-        headStyles: { fillColor: [240, 240, 240], textColor: [40, 40, 40], fontStyle: "bold" },
-        styles: { fontSize: 8, cellPadding: 2.5 },
-      });
-    } else if (isTsoc || isMcx) {
-      const tableRows = dataToExport.map((t) => [
-        t.id,
-        new Date(t.resolvedAt || t.createdAt).toLocaleDateString(),
-        t.status,
-        t.raisedByName,
-        t.problemDescription.slice(0, 50) + "...",
-        t.solution.slice(0, 50) + "...",
-        t.remarks || "-",
-      ]);
-
-      autoTable(doc, {
-        startY: 26,
-        head: [["ID", "DATE", "STATUS", "REQUEST RAISED BY", "PROBLEM DESCRIPTION", "SOLUTION", "REMARKS"]],
-        body: tableRows,
-        theme: "plain",
-        headStyles: { fillColor: [240, 240, 240], textColor: [40, 40, 40], fontStyle: "bold" },
-        styles: { fontSize: 8, cellPadding: 2.5 },
-      });
-    } else {
-      const tableRows = dataToExport.map((t) => [
-        t.id,
-        t.tsp,
-        t.lsa,
-        t.status,
-        t.raisedByName,
-        new Date(t.resolvedAt || t.createdAt).toLocaleDateString(),
-        t.downtimeMinutes ? `${t.downtimeMinutes}m` : "-",
-        t.problemDescription.slice(0, 35) + "...",
-        t.solution.slice(0, 35) + "...",
-      ]);
-
-      autoTable(doc, {
-        startY: 26,
-        head: [["ID", "TSP", "LSA", "STATUS", "RAISED BY", "RESOLVED AT", "DOWNTIME", "PROBLEM DESCRIPTION / ACTIVITY DETAIL", "SOLUTION"]],
-        body: tableRows,
-        theme: "plain",
-        headStyles: { fillColor: [240, 240, 240], textColor: [40, 40, 40], fontStyle: "bold" },
-        styles: { fontSize: 8, cellPadding: 2.5 },
-      });
-    }
-
-    doc.save(`taskpilot_${currentProject}_report_${Date.now()}.pdf`);
-    setExportMenuOpen(false);
-    setDateRangeModalOpen(false);
-    toast.success(`PDF generated for ${dataToExport.length} records.`);
-  };
-
-  const openDateRangePicker = (format: "csv" | "pdf") => {
+  const openExportModal = (format: "csv" | "pdf", scope: "current" | "all" | "date_range" = "all") => {
     setExportFormat(format);
-    setDateRangeModalOpen(true);
+    setExportScope(scope);
+    setExportConfigModalOpen(true);
     setExportMenuOpen(false);
+  };
+
+  const executeExport = () => {
+    let dataset = exportScope === "current" ? tasks : allTasks.length > 0 ? allTasks : tasks;
+    if (exportScope === "date_range") {
+      dataset = filterByDateRange(allTasks.length > 0 ? allTasks : tasks);
+    }
+
+    if (dataset.length === 0) {
+      toast.error("No records found in the specified criteria to export.");
+      return;
+    }
+
+    const activeCols = availableColumns.filter((col) => selectedColumnIds.includes(col.id));
+    if (activeCols.length === 0) {
+      toast.error("Please select at least one column to export.");
+      return;
+    }
+
+    if (exportFormat === "csv") {
+      const rows = dataset.map((task) => {
+        const rowObj: Record<string, string | number> = {};
+        activeCols.forEach((col) => {
+          rowObj[col.label] = col.getValue(task, activeProjectMeta);
+        });
+        return rowObj;
+      });
+
+      const csv = Papa.unparse(rows);
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `taskpilot_${currentProject}_${exportScope}_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setExportConfigModalOpen(false);
+      toast.success(`Exported ${dataset.length} records with ${activeCols.length} columns.`);
+    } else {
+      const doc = new jsPDF({ orientation: "landscape" });
+      doc.setFontSize(14);
+      doc.text(`TaskPilot - ${activeProjectMeta.name} Incident Report`, 14, 15);
+      doc.setFontSize(9);
+      doc.setTextColor(100);
+      const dateNote = exportScope === "date_range" ? ` | Range: ${startDate || "Start"} to ${endDate || "Now"}` : "";
+      doc.text(
+        `Generated: ${new Date().toLocaleString()} | Total Records: ${dataset.length} | Columns: ${activeCols.length}${dateNote}`,
+        14,
+        21
+      );
+
+      const headers = [activeCols.map((c) => c.label)];
+      const tableRows = dataset.map((t) =>
+        activeCols.map((col) => {
+          const val = col.getValue(t, activeProjectMeta);
+          return typeof val === "string" && val.length > 50 ? val.slice(0, 48) + "..." : String(val);
+        })
+      );
+
+      autoTable(doc, {
+        startY: 26,
+        head: headers,
+        body: tableRows,
+        theme: "plain",
+        headStyles: { fillColor: [240, 240, 240], textColor: [40, 40, 40], fontStyle: "bold" },
+        styles: { fontSize: 8, cellPadding: 2.5 },
+      });
+
+      doc.save(`taskpilot_${currentProject}_report_${Date.now()}.pdf`);
+      setExportConfigModalOpen(false);
+      toast.success(`PDF exported for ${dataset.length} records.`);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -335,6 +305,8 @@ export function ResolutionTable({
         );
     }
   };
+
+  const matchingDateCount = filterByDateRange(allTasks.length > 0 ? allTasks : tasks).length;
 
   return (
     <div className="bg-white dark:bg-slate-900/90 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-card overflow-hidden flex flex-col">
@@ -389,48 +361,45 @@ export function ResolutionTable({
             </button>
 
             {exportMenuOpen && (
-              <div className="absolute right-0 mt-1.5 w-56 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl shadow-card py-1.5 z-30 animate-in fade-in zoom-in-95 duration-100">
+              <div className="absolute right-0 mt-1.5 w-60 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl shadow-card py-1.5 z-30 animate-in fade-in zoom-in-95 duration-100">
                 <div className="px-3 py-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                  Quick Export
+                  Configure & Export
                 </div>
+
                 <button
-                  onClick={() => handleExportCSV("filtered")}
+                  onClick={() => openExportModal("csv", "all")}
                   className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center space-x-2"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>CSV (Current Page View)</span>
+                  <span>Export CSV (Select Columns)</span>
                 </button>
+
                 <button
-                  onClick={() => handleExportCSV("all")}
-                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center space-x-2"
-                >
-                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>CSV (All Records)</span>
-                </button>
-                <button
-                  onClick={() => handleExportPDF("all")}
+                  onClick={() => openExportModal("pdf", "all")}
                   className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center space-x-2"
                 >
                   <FileText className="w-3.5 h-3.5 text-rose-500" />
-                  <span>PDF (All Records)</span>
+                  <span>Export PDF (Select Columns)</span>
                 </button>
 
                 <div className="px-3 pt-2 pb-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider border-t border-slate-100 dark:border-slate-800 mt-1">
-                  Custom Range Export
+                  Date Range Filtered
                 </div>
+
                 <button
-                  onClick={() => openDateRangePicker("csv")}
-                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center space-x-2 font-medium"
+                  onClick={() => openExportModal("csv", "date_range")}
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center space-x-2"
                 >
                   <Calendar className="w-3.5 h-3.5 text-indigo-500" />
-                  <span>Export CSV by Date Range...</span>
+                  <span>CSV by Date Range...</span>
                 </button>
+
                 <button
-                  onClick={() => openDateRangePicker("pdf")}
-                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center space-x-2 font-medium"
+                  onClick={() => openExportModal("pdf", "date_range")}
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center space-x-2"
                 >
                   <Calendar className="w-3.5 h-3.5 text-indigo-500" />
-                  <span>Export PDF by Date Range...</span>
+                  <span>PDF by Date Range...</span>
                 </button>
               </div>
             )}
@@ -438,72 +407,153 @@ export function ResolutionTable({
         </div>
       </div>
 
-      {/* Date Range Modal */}
-      {dateRangeModalOpen && (
+      {/* Export Columns & Options Modal */}
+      {exportConfigModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-card max-w-sm w-full overflow-hidden p-5">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-card max-w-md w-full overflow-hidden p-5">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center space-x-2">
-                <Calendar className="w-4 h-4 text-indigo-500" />
+                <SlidersHorizontal className="w-4 h-4 text-slate-700 dark:text-slate-300" />
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  Select Date Range
+                  Export Options ({exportFormat.toUpperCase()})
                 </h3>
               </div>
               <button
-                onClick={() => setDateRangeModalOpen(false)}
+                onClick={() => setExportConfigModalOpen(false)}
                 className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="py-4 space-y-3">
+            <div className="py-4 space-y-4 max-h-[70vh] overflow-y-auto">
+              {/* Scope Selection */}
               <div>
-                <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-1">
-                  Start Date
+                <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Record Scope
                 </label>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-2 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
-                />
+                <div className="grid grid-cols-3 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setExportScope("all")}
+                    className={`px-2.5 py-1.5 text-[11px] font-medium rounded-lg border text-center transition ${
+                      exportScope === "all"
+                        ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-slate-900 dark:border-slate-100 font-semibold"
+                        : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                    }`}
+                  >
+                    All Records
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setExportScope("current")}
+                    className={`px-2.5 py-1.5 text-[11px] font-medium rounded-lg border text-center transition ${
+                      exportScope === "current"
+                        ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-slate-900 dark:border-slate-100 font-semibold"
+                        : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                    }`}
+                  >
+                    Current Page
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setExportScope("date_range")}
+                    className={`px-2.5 py-1.5 text-[11px] font-medium rounded-lg border text-center transition ${
+                      exportScope === "date_range"
+                        ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-slate-900 dark:border-slate-100 font-semibold"
+                        : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                    }`}
+                  >
+                    Date Range
+                  </button>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-1">
-                  End Date
-                </label>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-2 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
-                />
-              </div>
+              {/* Date Range Inputs if date_range selected */}
+              {exportScope === "date_range" && (
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2.5">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[10px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                        Start Date
+                      </label>
+                      <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="w-full text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1.5 text-slate-800 dark:text-slate-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                        End Date
+                      </label>
+                      <input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="w-full text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1.5 text-slate-800 dark:text-slate-100"
+                      />
+                    </div>
+                  </div>
+                  <div className="text-[10px] text-slate-400">
+                    Matching records: <strong className="text-slate-700 dark:text-slate-200">{matchingDateCount}</strong> found.
+                  </div>
+                </div>
+              )}
 
-              <div className="pt-2 text-[11px] text-slate-400 dark:text-slate-500">
-                Matching records: <strong className="text-slate-700 dark:text-slate-200">{filterByDateRange(allTasks.length > 0 ? allTasks : tasks).length}</strong> records found.
+              {/* Column Selector */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                    Select Columns to Retrieve ({selectedColumnIds.length}/{availableColumns.length})
+                  </label>
+                  <button
+                    type="button"
+                    onClick={selectAllColumns}
+                    className="text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+                  >
+                    Select All
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-1">
+                  {availableColumns.map((col) => {
+                    const isChecked = selectedColumnIds.includes(col.id);
+                    return (
+                      <div
+                        key={col.id}
+                        onClick={() => toggleColumnSelection(col.id)}
+                        className={`flex items-center space-x-2 p-2 rounded-lg border text-xs cursor-pointer transition select-none ${
+                          isChecked
+                            ? "bg-slate-50 dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
+                            : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500"
+                        }`}
+                      >
+                        {isChecked ? (
+                          <CheckSquare className="w-4 h-4 text-slate-900 dark:text-slate-100 flex-shrink-0" />
+                        ) : (
+                          <Square className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                        )}
+                        <span className="truncate text-[11px]">{col.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
             <div className="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100 dark:border-slate-800">
               <button
                 type="button"
-                onClick={() => setDateRangeModalOpen(false)}
+                onClick={() => setExportConfigModalOpen(false)}
                 className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  if (exportFormat === "csv") {
-                    handleExportCSV("custom_range");
-                  } else {
-                    handleExportPDF("custom_range");
-                  }
-                }}
+                onClick={executeExport}
                 className="bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 font-medium text-xs px-4 py-1.5 rounded-lg shadow-sm transition flex items-center space-x-1.5"
               >
                 <Download className="w-3.5 h-3.5" />
@@ -691,7 +741,7 @@ export function ResolutionTable({
                     <div className="flex items-center justify-end space-x-1 opacity-80 group-hover:opacity-100 transition">
                       <button
                         onClick={() => setSelectedTaskForEdit(task)}
-                        className="p-1 rounded text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                        className="p-1 rounded text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                         title="Edit Resolution"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
