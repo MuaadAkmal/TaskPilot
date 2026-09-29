@@ -27,8 +27,21 @@ function parseDateFlexible(val) {
   }
 
   if (typeof val === "string") {
-    // Clean ordinal suffixes: "25th" -> "25", "23rd" -> "23", "1st" -> "1", "2nd" -> "2"
-    let clean = val.replace(/(\d+)(st|nd|rd|th)/gi, "$1").trim();
+    const trimmed = val.trim();
+    if (!trimmed) return new Date();
+
+    // Check DD/MM/YYYY format
+    const ddmmyyyyMatch = trimmed.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/);
+    if (ddmmyyyyMatch) {
+      const day = parseInt(ddmmyyyyMatch[1], 10);
+      const month = parseInt(ddmmyyyyMatch[2], 10) - 1;
+      const year = parseInt(ddmmyyyyMatch[3], 10);
+      const parsed = new Date(year, month, day);
+      if (!isNaN(parsed.getTime())) return parsed;
+    }
+
+    // Clean ordinal suffixes: "September 25th, 2026" -> "September 25, 2026"
+    let clean = trimmed.replace(/(\d+)(st|nd|rd|th)/gi, "$1").trim();
     const parsed = new Date(clean);
     if (!isNaN(parsed.getTime())) {
       return parsed;
@@ -39,7 +52,7 @@ function parseDateFlexible(val) {
 }
 
 /**
- * Normalizes status strings to Prisma enum values: RESOLVED, IN_PROGRESS, PENDING
+ * Normalizes status strings to Prisma enum values: RESOLVED, IN_PROGRESS, PENDING, CLOSED
  */
 function normalizeStatus(val) {
   if (!val) return "RESOLVED";
@@ -47,8 +60,8 @@ function normalizeStatus(val) {
   if (s.includes("RESOLV")) return "RESOLVED";
   if (s.includes("PROGRESS")) return "IN_PROGRESS";
   if (s.includes("PENDING")) return "PENDING";
-  if (s.includes("CLOSE")) return "RESOLVED";
-  return "RESOLVED";
+  if (s.includes("CLOSE")) return "CLOSED";
+  return s || "RESOLVED";
 }
 
 /**
@@ -59,7 +72,10 @@ function getRowValue(row, aliases) {
     for (const key of Object.keys(row)) {
       if (key.trim().toLowerCase() === alias.toLowerCase()) {
         const val = row[key];
-        return val !== undefined && val !== null ? String(val).trim() : "";
+        if (val !== undefined && val !== null) {
+          const s = String(val).trim();
+          if (s) return s;
+        }
       }
     }
   }
@@ -71,7 +87,6 @@ async function seed() {
   console.log(`📊 TaskPilot - CMS Excel Ingestion & Seeding`);
   console.log(`==============================================\n`);
 
-  // Allow custom path passed via argument: node prisma/seed-cms-excel.js /path/to/file.xlsx
   const customFilePath = process.argv[2];
   const defaultPath = path.join(__dirname, "cms_records.xlsx");
   const targetFilePath = customFilePath ? path.resolve(customFilePath) : defaultPath;
@@ -89,14 +104,22 @@ async function seed() {
   const sheetName = workbook.SheetNames[0];
   const sheet = workbook.Sheets[sheetName];
 
+  // raw: false to get formatted strings, defval: "" so no keys are dropped
   const rawRows = XLSX.utils.sheet_to_json(sheet, { raw: false, defval: "" });
-  console.log(`📋 Found ${rawRows.length} rows in sheet "${sheetName}".\n`);
+  console.log(`📋 Found ${rawRows.length} total rows in sheet "${sheetName}".\n`);
 
   let insertedCount = 0;
   let skippedCount = 0;
 
   for (let i = 0; i < rawRows.length; i++) {
     const row = rawRows[i];
+
+    // Check if entire row is blank
+    const allValuesEmpty = Object.values(row).every((v) => !String(v).trim());
+    if (allValuesEmpty) {
+      skippedCount++;
+      continue;
+    }
 
     const lsa = getRowValue(row, ["LSA", "Circle", "Circle (LSA)", "LSA (Circle)"]) || "ALL";
     const tsp = getRowValue(row, ["TSP", "Provider", "Telecom Provider", "Operator"]) || "None";
@@ -106,6 +129,7 @@ async function seed() {
       "Issue Description",
       "Description",
       "Problem description / Activity Detail",
+      "Issue",
     ]);
     const solution = getRowValue(row, [
       "Solution",
@@ -115,45 +139,44 @@ async function seed() {
       "Root Cause & Resolution",
     ]);
     const remarks = getRowValue(row, ["Remarks", "Remark", "Notes", "Comment"]) || null;
-    const raisedByName = getRowValue(row, ["Request Raised By", "Raised By", "LEA", "Raised By (LEA)"]) || "LEA / NOC Team";
+    const raisedByName = getRowValue(row, ["Request Raised By", "Raised By", "LEA", "Raised By (LEA)", "User"]) || "LEA / NOC Team";
     const rawStatus = getRowValue(row, ["Status", "State"]);
-    const rawCreatedAt = row["Created At"] || row["Date"] || row["Date & Time"] || row["CreatedAt"];
-
-    if (!problemDescription && !solution) {
-      skippedCount++;
-      continue;
-    }
+    const rawCreatedAt = getRowValue(row, ["Created At", "Date", "Date & Time", "CreatedAt", "Time", "Timestamp"]);
 
     const status = normalizeStatus(rawStatus);
     const createdAtDate = parseDateFlexible(rawCreatedAt);
-    const resolvedAtDate = status === "RESOLVED" ? createdAtDate : null;
+    const resolvedAtDate = (status === "RESOLVED" || status === "CLOSED") ? createdAtDate : null;
 
-    await prisma.taskResolution.create({
-      data: {
-        project: "CMS_VAL_FS",
-        lsa: lsa.toUpperCase(),
-        tsp: tsp,
-        status: status,
-        problemDescription: problemDescription || "No description provided",
-        solution: solution || "Pending resolution",
-        remarks: remarks || undefined,
-        raisedByName: raisedByName,
-        createdAt: createdAtDate,
-        resolvedAt: resolvedAtDate,
-        downtimeMinutes: 0,
-      },
-    });
+    try {
+      await prisma.taskResolution.create({
+        data: {
+          project: "CMS",
+          lsa: lsa.toUpperCase(),
+          tsp: tsp,
+          status: status,
+          problemDescription: problemDescription || solution || "No description provided",
+          solution: solution || problemDescription || "Pending resolution",
+          remarks: remarks || undefined,
+          raisedByName: raisedByName,
+          createdAt: createdAtDate,
+          resolvedAt: resolvedAtDate,
+          downtimeMinutes: 0,
+        },
+      });
 
-    insertedCount++;
-    if (insertedCount % 20 === 0 || insertedCount === rawRows.length) {
-      console.log(`  ✓ Ingested ${insertedCount} / ${rawRows.length} records...`);
+      insertedCount++;
+      if (insertedCount % 25 === 0 || insertedCount === rawRows.length) {
+        console.log(`  ✓ Ingested ${insertedCount} / ${rawRows.length} records...`);
+      }
+    } catch (rowErr) {
+      console.warn(`  ⚠️ Row ${i + 1} failed to insert:`, rowErr.message);
     }
   }
 
   console.log(`\n==============================================`);
   console.log(`✨ Ingestion Complete!`);
   console.log(`   - Total Inserted: ${insertedCount}`);
-  console.log(`   - Skipped Empty:  ${skippedCount}`);
+  console.log(`   - Skipped Rows:   ${skippedCount}`);
   console.log(`==============================================\n`);
 }
 
