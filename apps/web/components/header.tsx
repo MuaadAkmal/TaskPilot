@@ -148,7 +148,7 @@ export function Header({ currentProject }: HeaderProps) {
             }`}
           >
             <BarChart3 className="w-3.5 h-3.5 text-indigo-500" />
-            <span>CIAS Analytics</span>
+            <span>Analytics</span>
           </Link>
           <Link
             href={`/agent?project=${currentProject}`}
