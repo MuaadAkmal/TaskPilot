@@ -137,7 +137,7 @@ function StatsContent() {
         </div>
 
         {/* 1. Metric Counter KPI Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 mb-6">
           {/* Resolved */}
           <div className="bg-white dark:bg-slate-900/90 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-card p-4">
             <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400 mb-2">
@@ -177,20 +177,6 @@ function StatsContent() {
             </div>
             <p className="text-[11px] text-slate-400 mt-1">
               {stats.pending} pending verification
-            </p>
-          </div>
-
-          {/* Avg Downtime */}
-          <div className="bg-white dark:bg-slate-900/90 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-card p-4">
-            <div className="flex items-center justify-between text-purple-600 dark:text-purple-400 mb-2">
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Avg. MTTR / Downtime</span>
-              <Clock className="w-4 h-4" />
-            </div>
-            <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-              {stats.avgDowntime} <span className="text-sm font-normal text-slate-400">mins</span>
-            </div>
-            <p className="text-[11px] text-slate-400 mt-1">
-              {stats.totalDowntime} total outage mins
             </p>
           </div>
         </div>
