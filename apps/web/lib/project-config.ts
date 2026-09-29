@@ -25,27 +25,35 @@ export interface ProjectMeta {
 }
 
 export const CMS_LSA_LIST = [
+  "AP",
+  "GJ",
+  "KA",
   "KR",
   "MP",
-  "MH",
   "MB",
+  "MH",
   "OR",
   "TN",
 ] as const;
 
 export const CMS_LSA_FULL_NAMES: Record<string, string> = {
-  KR: "Karnataka (KR)",
+  AP: "Andhra Pradesh (AP)",
+  GJ: "Gujarat (GJ)",
+  KA: "Karnataka (KA)",
+  KR: "Kerala (KR)",
   MP: "Madhya Pradesh (MP)",
-  MH: "Maharashtra (MH)",
   MB: "Mumbai (MB)",
+  MH: "Maharashtra (MH)",
   OR: "Odisha (OR)",
   TN: "Tamil Nadu (TN)",
 };
 
 export const CMS_LSA_TSP_MAP: Record<string, string[]> = {
+  AP: ["AT", "BS", "RC", "RI", "VO", "TA", "ZVC", "P3 Tech"],
+  GJ: ["AT", "BS", "RC", "RI", "VO", "TA"],
+  KA: ["AT", "BS", "RC", "RI", "VO", "TA", "Ring Central", "AT and T"],
   KR: ["AT", "BS", "RC", "RI", "VO", "TA"],
   MP: ["AT", "BS", "RC", "RI", "VO", "TA"],
-  MH: ["AT", "BS", "RC", "RI", "VO", "TA"],
   MB: [
     "AT",
     "BS",
@@ -69,6 +77,7 @@ export const CMS_LSA_TSP_MAP: Record<string, string[]> = {
     "NTT",
     "Vodafone ILD",
   ],
+  MH: ["AT", "BS", "RC", "RI", "VO", "TA"],
   OR: ["AT", "BS", "RC", "RI", "VO", "TA"],
   TN: ["AT", "BS", "RC", "RI", "VO", "TA", "ZVC", "Airtel IPLC", "Singtel IPLC"],
 };
@@ -80,6 +89,10 @@ export const TSPS = [
   "RI",
   "VO",
   "TA",
+  "ZVC",
+  "P3 Tech",
+  "Ring Central",
+  "AT and T",
   "British Telecom",
   "BSNL ILD",
   "gcxg",
@@ -92,7 +105,6 @@ export const TSPS = [
   "Telestra ILD",
   "Verizon ILD",
   "Reliance ILD",
-  "ZVC",
   "NTT",
   "Vodafone ILD",
   "Airtel IPLC",
@@ -100,17 +112,17 @@ export const TSPS = [
 ] as const;
 
 export const LSAS = [
+  "AP",
+  "GJ",
+  "KA",
   "KR",
   "MP",
-  "MH",
   "MB",
+  "MH",
   "OR",
   "TN",
   "Delhi",
   "Kolkata",
-  "Gujarat",
-  "Andhra Pradesh & Telangana",
-  "Kerala",
   "Punjab",
   "Haryana",
   "Uttar Pradesh (East)",
