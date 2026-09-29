@@ -143,18 +143,18 @@ export function ResolutionTable({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200/80 shadow-card overflow-hidden flex flex-col">
+    <div className="bg-white dark:bg-slate-900/90 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-card overflow-hidden flex flex-col">
       {/* Minimal Filter Toolbar */}
-      <div className="p-3.5 border-b border-slate-100 flex flex-wrap gap-2 items-center justify-between">
+      <div className="p-3.5 border-b border-slate-100 dark:border-slate-800 flex flex-wrap gap-2 items-center justify-between">
         {/* Search */}
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
+          <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400 dark:text-slate-500" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={`Search ${activeProjectMeta.name}...`}
-            className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200/80 rounded-lg focus:bg-white focus:outline-none focus:border-slate-400 transition"
+            className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
           />
         </div>
 
@@ -163,7 +163,7 @@ export function ResolutionTable({
           <select
             value={tsp}
             onChange={(e) => setTsp(e.target.value)}
-            className="text-xs bg-slate-50 border border-slate-200/80 rounded-lg px-2 py-1.5 text-slate-700 focus:bg-white focus:outline-none focus:border-slate-400 transition"
+            className="text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-2 py-1.5 text-slate-700 dark:text-slate-200 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
           >
             <option value="ALL">All {activeProjectMeta.fields.primaryFieldLabel}</option>
             {activeProjectMeta.fields.primaryOptions.map((opt) => (
@@ -176,7 +176,7 @@ export function ResolutionTable({
           <select
             value={lsa}
             onChange={(e) => setLsa(e.target.value)}
-            className="text-xs bg-slate-50 border border-slate-200/80 rounded-lg px-2 py-1.5 text-slate-700 focus:bg-white focus:outline-none focus:border-slate-400 transition"
+            className="text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-2 py-1.5 text-slate-700 dark:text-slate-200 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
           >
             <option value="ALL">All {activeProjectMeta.fields.secondaryFieldLabel}</option>
             {activeProjectMeta.fields.secondaryOptions.map((opt) => (
@@ -189,7 +189,7 @@ export function ResolutionTable({
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="text-xs bg-slate-50 border border-slate-200/80 rounded-lg px-2 py-1.5 text-slate-700 focus:bg-white focus:outline-none focus:border-slate-400 transition"
+            className="text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-2 py-1.5 text-slate-700 dark:text-slate-200 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
           >
             <option value="resolvedAt_desc">Latest</option>
             <option value="resolvedAt_asc">Oldest</option>
@@ -201,31 +201,31 @@ export function ResolutionTable({
           <div className="relative">
             <button
               onClick={() => setExportMenuOpen(!exportMenuOpen)}
-              className="flex items-center space-x-1 text-xs bg-slate-50 border border-slate-200/80 hover:bg-slate-100 text-slate-700 px-2.5 py-1.5 rounded-lg transition"
+              className="flex items-center space-x-1 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-2.5 py-1.5 rounded-lg transition"
             >
-              <Download className="w-3.5 h-3.5 text-slate-500" />
+              <Download className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
               <span>Export</span>
             </button>
 
             {exportMenuOpen && (
-              <div className="absolute right-0 mt-1.5 w-48 bg-white border border-slate-200/80 rounded-xl shadow-card py-1 z-30 animate-in fade-in zoom-in-95 duration-100">
+              <div className="absolute right-0 mt-1.5 w-48 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl shadow-card py-1 z-30 animate-in fade-in zoom-in-95 duration-100">
                 <button
                   onClick={() => handleExportCSV("filtered")}
-                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 text-slate-700 flex items-center space-x-2"
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center space-x-2"
                 >
-                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   <span>CSV (Current View)</span>
                 </button>
                 <button
                   onClick={() => handleExportCSV("all")}
-                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 text-slate-700 flex items-center space-x-2"
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center space-x-2"
                 >
-                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   <span>CSV (All Records)</span>
                 </button>
                 <button
                   onClick={handleExportPDF}
-                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 text-slate-700 flex items-center space-x-2 border-t border-slate-100"
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center space-x-2 border-t border-slate-100 dark:border-slate-800"
                 >
                   <FileText className="w-3.5 h-3.5 text-rose-500" />
                   <span>PDF Summary</span>
@@ -240,7 +240,7 @@ export function ResolutionTable({
       <div className="overflow-x-auto min-h-[360px]">
         <table className="w-full text-left text-xs">
           <thead>
-            <tr className="border-b border-slate-100 bg-slate-50/50 text-[11px] font-medium text-slate-400 uppercase tracking-wider">
+            <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 text-[11px] font-medium text-slate-400 dark:text-slate-400 uppercase tracking-wider">
               <th className="py-2.5 px-3.5 w-14">#</th>
               <th className="py-2.5 px-3 w-32">{activeProjectMeta.fields.primaryFieldLabel}</th>
               <th className="py-2.5 px-4">Resolution Details</th>
@@ -250,50 +250,50 @@ export function ResolutionTable({
               <th className="py-2.5 px-3 w-16 text-right"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {tasks.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-14 text-center text-slate-400">
-                  <Filter className="w-6 h-6 mx-auto mb-1 text-slate-300" />
-                  <p className="text-xs font-medium text-slate-600">No records found</p>
+                <td colSpan={7} className="py-14 text-center text-slate-400 dark:text-slate-500">
+                  <Filter className="w-6 h-6 mx-auto mb-1 text-slate-300 dark:text-slate-600" />
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-300">No records found</p>
                 </td>
               </tr>
             ) : (
               tasks.map((task) => (
-                <tr key={task.id} className="hover:bg-slate-50/80 transition group">
+                <tr key={task.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition group">
                   {/* ID */}
-                  <td className="py-3 px-3.5 font-mono text-slate-400 text-[11px]">
+                  <td className="py-3 px-3.5 font-mono text-slate-400 dark:text-slate-500 text-[11px]">
                     #{task.id}
                   </td>
 
                   {/* TSP / Category */}
                   <td className="py-3 px-3">
-                    <div className="font-semibold text-slate-900 text-xs">{task.tsp}</div>
-                    <div className="text-[10px] text-slate-400">{task.lsa}</div>
+                    <div className="font-semibold text-slate-900 dark:text-slate-100 text-xs">{task.tsp}</div>
+                    <div className="text-[10px] text-slate-400 dark:text-slate-500">{task.lsa}</div>
                   </td>
 
                   {/* Problem & Solution */}
                   <td className="py-3 px-4 max-w-sm">
-                    <p className="font-normal text-slate-800 line-clamp-1">{task.problemDescription}</p>
-                    <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
-                      <span className="font-medium text-slate-700">Fix:</span> {task.solution}
+                    <p className="font-normal text-slate-800 dark:text-slate-200 line-clamp-1">{task.problemDescription}</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                      <span className="font-medium text-slate-700 dark:text-slate-300">Fix:</span> {task.solution}
                     </p>
                   </td>
 
                   {/* Status Badge */}
                   <td className="py-3 px-3 text-center">
-                    <span className="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+                    <span className="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/60">
                       {task.status}
                     </span>
                   </td>
 
                   {/* Downtime */}
-                  <td className="py-3 px-3 text-slate-600 text-[11px]">
+                  <td className="py-3 px-3 text-slate-600 dark:text-slate-400 text-[11px]">
                     {formatDowntime(task.downtimeMinutes)}
                   </td>
 
                   {/* Raised By */}
-                  <td className="py-3 px-3 text-slate-500 text-[11px] truncate max-w-[100px]">
+                  <td className="py-3 px-3 text-slate-500 dark:text-slate-400 text-[11px] truncate max-w-[100px]">
                     {task.raisedByName.split(" ")[0]}
                   </td>
 
@@ -303,14 +303,14 @@ export function ResolutionTable({
                       <button
                         onClick={() => setSelectedTaskForDetail(task)}
                         title="View"
-                        className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-slate-900 transition"
+                        className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition"
                       >
                         <Eye className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => setSelectedTaskForEdit(task)}
                         title="Edit"
-                        className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-slate-900 transition"
+                        className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
                       </button>
@@ -323,8 +323,8 @@ export function ResolutionTable({
         </table>
       </div>
 
-      {/* Pagination Footer (Exactly 8 records per page) */}
-      <div className="px-4 py-2.5 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+      {/* Pagination Footer */}
+      <div className="px-4 py-2.5 bg-slate-50/50 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
         <span className="text-[11px]">
           {tasks.length > 0 ? (page - 1) * 8 + 1 : 0}-{Math.min(page * 8, total)} of {total} records
         </span>
@@ -333,19 +333,19 @@ export function ResolutionTable({
           <button
             onClick={() => onPageChange(page - 1)}
             disabled={page <= 1}
-            className="p-1 rounded hover:bg-slate-200/60 disabled:opacity-30 disabled:hover:bg-transparent transition text-slate-600"
+            className="p-1 rounded hover:bg-slate-200/60 dark:hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-transparent transition text-slate-600 dark:text-slate-300"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
 
-          <span className="text-[11px] font-medium text-slate-700 px-1">
+          <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 px-1">
             {page} / {totalPages || 1}
           </span>
 
           <button
             onClick={() => onPageChange(page + 1)}
             disabled={page >= totalPages}
-            className="p-1 rounded hover:bg-slate-200/60 disabled:opacity-30 disabled:hover:bg-transparent transition text-slate-600"
+            className="p-1 rounded hover:bg-slate-200/60 dark:hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-transparent transition text-slate-600 dark:text-slate-300"
           >
             <ChevronRight className="w-4 h-4" />
           </button>

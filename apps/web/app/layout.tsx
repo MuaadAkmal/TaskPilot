@@ -1,40 +1,60 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "sonner";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Toaster } from "sonner";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "TaskPilot - Incident & Task Resolution Knowledge Hub",
-  description: "Enterprise operational resolution tracking with Google ADK Copilot and multi-project knowledge base",
+  title: "TaskPilot - Incident Resolution Hub",
+  description: "Enterprise Operational Platform with Multi-Project Resolution & AI Copilot",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
-  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
-  const isPlaceholder = !publishableKey || publishableKey.includes("placeholder");
-
-  const content = (
-    <html lang="en">
-      <body className={`${inter.className} min-h-screen bg-slate-50 text-slate-900 antialiased`}>
-        {children}
-        <Toaster position="top-right" richColors />
-      </body>
-    </html>
+}) {
+  const clerkPubKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  const isClerkConfigured = Boolean(
+    clerkPubKey &&
+      !clerkPubKey.includes("placeholder") &&
+      clerkPubKey.startsWith("pk_")
   );
 
-  if (isPlaceholder) {
-    return content;
+  const content = (
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <div className="min-h-screen bg-[#fafafa] dark:bg-[#09090b] text-slate-900 dark:text-slate-100 transition-colors">
+        {children}
+      </div>
+      <Toaster position="top-right" richColors theme="system" />
+    </ThemeProvider>
+  );
+
+  if (!isClerkConfigured) {
+    return (
+      <html lang="en" suppressHydrationWarning>
+        <body className={`${inter.className} antialiased`}>
+          {content}
+        </body>
+      </html>
+    );
   }
 
   return (
-    <ClerkProvider publishableKey={publishableKey}>
-      {content}
+    <ClerkProvider publishableKey={clerkPubKey}>
+      <html lang="en" suppressHydrationWarning>
+        <body className={`${inter.className} antialiased`}>
+          {content}
+        </body>
+      </html>
     </ClerkProvider>
   );
 }
