@@ -138,6 +138,7 @@ export const CMS_LEA_RAISED_BY_OPTIONS = [
   "IB",
   "RAW",
   "CDOT",
+  "SI",
 ] as const;
 
 export const TSOC_RAISED_BY_OPTIONS = [
