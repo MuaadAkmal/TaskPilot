@@ -49,19 +49,19 @@ export const LSAS = [
 ] as const;
 
 export const ASR_SERVICES = [
-  "Dynamic Route Optimizer",
-  "Gateway Failover Broker",
-  "BGP Multipath Controller",
-  "Edge Telemetry Agent",
-  "Traffic Shaper Daemon",
+  "Audio Ingestion & Streaming",
+  "Acoustic Model Engine",
+  "Language & Vocabulary Decoder",
+  "Realtime Transcription Gateway",
+  "Voice Activity Detector (VAD)",
 ] as const;
 
 export const ASR_NODES = [
-  "DC-North-Primary",
-  "DC-North-Secondary",
-  "DC-West-Edge01",
-  "DC-South-Core02",
-  "Edge-POP-Chennai",
+  "GPU-Cluster-Alpha",
+  "Inference-Pod-01",
+  "Inference-Pod-02",
+  "Streaming-Buffer-DC1",
+  "Edge-Transcriber-PoP",
 ] as const;
 
 export const CIAS_DOMAINS = [
@@ -96,13 +96,13 @@ export const PROJECTS: ProjectMeta[] = [
   },
   {
     code: "ASR",
-    name: "ASR (Auto Service Routing)",
+    name: "ASR (Automatic Speech Recognition)",
     badge: "ASR",
-    description: "Automated Service Routing & Node Escalation",
+    description: "Automatic Speech Recognition & Realtime Transcription Engine",
     color: "bg-emerald-600 text-white",
     fields: {
-      primaryFieldLabel: "ASR Service Component",
-      secondaryFieldLabel: "Target Infrastructure Node",
+      primaryFieldLabel: "Speech Component / Pipeline",
+      secondaryFieldLabel: "Processing Cluster / Node",
       primaryOptions: ASR_SERVICES,
       secondaryOptions: ASR_NODES,
     },

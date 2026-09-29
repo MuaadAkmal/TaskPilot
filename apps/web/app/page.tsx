@@ -10,13 +10,13 @@ import { ProjectDocumentsView } from "@/components/project-documents-view";
 import { CopilotDrawer } from "@/components/copilot-drawer";
 import { ProjectCode, PROJECTS } from "@/lib/project-config";
 import { MockTask } from "@/lib/store";
-import { RotateCw, FileCode, Users, Layers, BookOpen } from "lucide-react";
+import { Users, Layers, BookOpen, Clock, Sparkles } from "lucide-react";
 
 function DashboardContent() {
   const searchParams = useSearchParams();
   const currentProject = (searchParams.get("project") as ProjectCode) || "CMS_VAL_FS";
 
-  const [activeTab, setActiveTab] = useState<"resolutions" | "team" | "documents">("resolutions");
+  const [activeTab, setActiveTab] = useState<"workspace" | "team" | "documents">("workspace");
   const [tasks, setTasks] = useState<MockTask[]>([]);
   const [allTasks, setAllTasks] = useState<MockTask[]>([]);
   const [total, setTotal] = useState<number>(0);
@@ -24,7 +24,7 @@ function DashboardContent() {
   const [totalPages, setTotalPages] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Filters
+  // Filters for CMS VAL&FS
   const [search, setSearch] = useState<string>("");
   const [tsp, setTsp] = useState<string>("ALL");
   const [lsa, setLsa] = useState<string>("ALL");
@@ -33,6 +33,7 @@ function DashboardContent() {
   const [sort, setSort] = useState<string>("resolvedAt_desc");
 
   const fetchTasks = useCallback(async () => {
+    if (currentProject !== "CMS_VAL_FS") return;
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -68,9 +69,6 @@ function DashboardContent() {
   }, [fetchTasks]);
 
   const activeProjectMeta = PROJECTS.find((p) => p.code === currentProject) || PROJECTS[0];
-
-  // For other projects (CIAS, ASR), show placeholder state for the form per user request:
-  // "the form for other projects are acompltly different , so leave it empty for now"
   const isCmsValFs = currentProject === "CMS_VAL_FS";
 
   return (
@@ -78,29 +76,34 @@ function DashboardContent() {
       <Header currentProject={currentProject} />
 
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6">
-        {/* Minimal Page Header & Tab Navigation */}
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+        {/* Page Header & Navigation */}
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100 tracking-tight">
+            <div className="flex items-center space-x-2">
+              <span className="text-[11px] font-semibold text-indigo-500 uppercase tracking-wider">
+                Workspace
+              </span>
+            </div>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight mt-0.5">
               {activeProjectMeta.name}
             </h1>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               {activeProjectMeta.description}
             </p>
           </div>
 
-          {/* Clean Segmented Tab Switcher */}
-          <div className="flex items-center space-x-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+          {/* Segmented Tab Switcher */}
+          <div className="flex items-center space-x-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl">
             <button
-              onClick={() => setActiveTab("resolutions")}
+              onClick={() => setActiveTab("workspace")}
               className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-                activeTab === "resolutions"
+                activeTab === "workspace"
                   ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-xs"
                   : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
-              <span>Resolutions</span>
+              <span>{isCmsValFs ? "Resolutions & Table" : "Overview"}</span>
             </button>
 
             <button
@@ -129,50 +132,72 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* Tab 1: Resolutions & Incidents */}
-        {activeTab === "resolutions" && (
+        {/* Tab 1: Primary Workspace Area */}
+        {activeTab === "workspace" && (
           <>
-            {/* Show Form only for CMS_VAL_FS; for other projects (CIAS, ASR), leave form empty/placeholder */}
             {isCmsValFs ? (
-              <ResolutionForm project={currentProject} onRecordCreated={fetchTasks} />
+              <>
+                {/* CMS VAL&FS has active form + 8-record paginated resolution table */}
+                <ResolutionForm project={currentProject} onRecordCreated={fetchTasks} />
+                <ResolutionTable
+                  currentProject={currentProject}
+                  tasks={tasks}
+                  allTasks={allTasks}
+                  total={total}
+                  page={page}
+                  totalPages={totalPages}
+                  onPageChange={setPage}
+                  onRefresh={fetchTasks}
+                  search={search}
+                  setSearch={setSearch}
+                  tsp={tsp}
+                  setTsp={setTsp}
+                  lsa={lsa}
+                  setLsa={setLsa}
+                  startDate={startDate}
+                  setStartDate={setStartDate}
+                  endDate={endDate}
+                  setEndDate={setEndDate}
+                  sort={sort}
+                  setSort={setSort}
+                />
+              </>
             ) : (
-              <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/40 text-center mb-6">
-                <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                  Custom entry form for <strong>{activeProjectMeta.name}</strong> will be configured to match project schema.
+              /* CIAS and ASR modules: Clean placeholder awaiting custom schema discussion */
+              <div className="bg-white dark:bg-slate-900/90 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-card p-8 text-center">
+                <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center mx-auto mb-3">
+                  <Clock className="w-6 h-6" />
+                </div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  {activeProjectMeta.name} Module Workspace
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
+                  The custom operational data structure and workflows for <strong>{activeProjectMeta.name}</strong> will be configured during the next phase.
                 </p>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  View recorded incidents, assigned team members, or project documentation using the tabs above.
-                </p>
+
+                <div className="mt-5 flex items-center justify-center space-x-3">
+                  <button
+                    onClick={() => setActiveTab("team")}
+                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/80 transition"
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    <span>View Assigned Engineers</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab("documents")}
+                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/80 transition"
+                  >
+                    <BookOpen className="w-3.5 h-3.5" />
+                    <span>View Docs & Runbooks</span>
+                  </button>
+                </div>
               </div>
             )}
-
-            {/* Table */}
-            <ResolutionTable
-              currentProject={currentProject}
-              tasks={tasks}
-              allTasks={allTasks}
-              total={total}
-              page={page}
-              totalPages={totalPages}
-              onPageChange={setPage}
-              onRefresh={fetchTasks}
-              search={search}
-              setSearch={setSearch}
-              tsp={tsp}
-              setTsp={setTsp}
-              lsa={lsa}
-              setLsa={setLsa}
-              startDate={startDate}
-              setStartDate={setStartDate}
-              endDate={endDate}
-              setEndDate={setEndDate}
-              sort={sort}
-              setSort={setSort}
-            />
           </>
         )}
 
-        {/* Tab 2: Assigned Team Members for Module */}
+        {/* Tab 2: Assigned Team Members */}
         {activeTab === "team" && <ProjectTeamView project={currentProject} />}
 
         {/* Tab 3: Documentation & Links */}
