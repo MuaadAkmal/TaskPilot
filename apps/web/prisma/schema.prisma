@@ -1,0 +1,93 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum ProjectCode {
+  CMS_VAL_FS
+  ASR
+  CIAS
+  OTHER
+}
+
+enum Status {
+  RESOLVED
+  IN_PROGRESS
+  PENDING_VERIFICATION
+  CLOSED
+}
+
+enum Role {
+  ENGINEER
+  TEAM_LEAD
+  ADMIN
+}
+
+// User Profile mapped to Clerk Auth ID
+model User {
+  id             String        @id @default(cuid())
+  clerkId        String        @unique
+  email          String        @unique
+  fullName       String
+  title          String        @default("NOC Engineer")
+  role           Role          @default(ENGINEER)
+  projects       ProjectCode[] @default([CMS_VAL_FS])
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  tasksRaised    TaskResolution[] @relation("TasksRaised")
+  tasksEdited    TaskResolution[] @relation("TasksEdited")
+}
+
+// Core Task & Resolution Model (Scoped to Project)
+model TaskResolution {
+  id                 String             @id @default(cuid())
+  project            ProjectCode        @default(CMS_VAL_FS)
+  
+  // Specific to CMS VAL&FS
+  tsp                String?            // Strict: Airtel, Jio, Vodafone Idea (Vi), BSNL, MTNL, Tata Tele
+  lsa                String?            // 22 DOT Telecom Circles
+  status             Status             @default(RESOLVED)
+  
+  problemDescription String             @db.Text
+  solution           String             @db.Text
+  remarks            String?            @db.Text
+  
+  // Timestamps & Metrics
+  createdAt          DateTime           @default(now())
+  resolvedAt         DateTime?
+  downtimeMinutes    Int?               // Computed duration in minutes
+  
+  // Attribution
+  raisedByName       String             @default("Operations Engineer")
+  raisedById         String?
+  raisedBy           User?              @relation("TasksRaised", fields: [raisedById], references: [id])
+  lastEditedById     String?
+  lastEditedBy       User?              @relation("TasksEdited", fields: [lastEditedById], references: [id])
+  updatedAt          DateTime           @updatedAt
+  
+  // Attached Documentation / Links
+  docLinks           String[]           @default([])
+
+  @@index([project, tsp, lsa])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Project Documentation & Knowledge Library (Ingested by Agent)
+model ProjectDocument {
+  id          String      @id @default(cuid())
+  project     ProjectCode
+  title       String
+  url         String?
+  content     String      @db.Text
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([project])
+}

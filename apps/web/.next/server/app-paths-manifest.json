@@ -1,0 +1,8 @@
+{
+  "/(dashboard)/agent/page": "app/(dashboard)/agent/page.js",
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/agent/route": "app/api/agent/route.js",
+  "/api/tasks/route": "app/api/tasks/route.js",
+  "/page": "app/page.js"
+}

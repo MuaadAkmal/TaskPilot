@@ -1,0 +1,8 @@
+{
+  "/(dashboard)/agent/page": "/agent",
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/api/agent/route": "/api/agent",
+  "/api/tasks/route": "/api/tasks",
+  "/page": "/"
+}
