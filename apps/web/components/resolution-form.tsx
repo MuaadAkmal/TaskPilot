@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ProjectCode, PROJECTS, STATUS_OPTIONS, LEA_RAISED_BY_OPTIONS } from "@/lib/project-config";
+import { ProjectCode, PROJECTS, STATUS_OPTIONS } from "@/lib/project-config";
 import { Plus, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 
@@ -12,12 +12,13 @@ interface ResolutionFormProps {
 
 export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps) {
   const activeProjectMeta = PROJECTS.find((p) => p.code === project) || PROJECTS[0];
+  const raisedByList = activeProjectMeta.fields.raisedByOptions || [];
 
   const [isOpen, setIsOpen] = useState<boolean>(true);
-  const [primaryFieldVal, setPrimaryFieldVal] = useState<string>(activeProjectMeta.fields.primaryOptions[0]);
-  const [secondaryFieldVal, setSecondaryFieldVal] = useState<string>(activeProjectMeta.fields.secondaryOptions[0]);
+  const [primaryFieldVal, setPrimaryFieldVal] = useState<string>(activeProjectMeta.fields.primaryOptions[0] || "");
+  const [secondaryFieldVal, setSecondaryFieldVal] = useState<string>(activeProjectMeta.fields.secondaryOptions[0] || "");
   const [status, setStatus] = useState<string>("RESOLVED");
-  const [raisedByName, setRaisedByName] = useState<string>(LEA_RAISED_BY_OPTIONS[0]);
+  const [raisedByName, setRaisedByName] = useState<string>(raisedByList[0] || "CDOT");
   const [problemDescription, setProblemDescription] = useState<string>("");
   const [solution, setSolution] = useState<string>("");
   const [remarks, setRemarks] = useState<string>("");
@@ -25,9 +26,12 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
   const [resolvedAt, setResolvedAt] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
+  const isTsoc = project === "TSOC";
+
   useEffect(() => {
-    setPrimaryFieldVal(activeProjectMeta.fields.primaryOptions[0]);
-    setSecondaryFieldVal(activeProjectMeta.fields.secondaryOptions[0]);
+    setPrimaryFieldVal(activeProjectMeta.fields.primaryOptions[0] || "");
+    setSecondaryFieldVal(activeProjectMeta.fields.secondaryOptions[0] || "");
+    setRaisedByName(activeProjectMeta.fields.raisedByOptions[0] || "CDOT");
   }, [project, activeProjectMeta]);
 
   useEffect(() => {
@@ -70,8 +74,8 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           project,
-          tsp: primaryFieldVal,
-          lsa: secondaryFieldVal,
+          tsp: primaryFieldVal || "General",
+          lsa: secondaryFieldVal || "All",
           status,
           raisedByName,
           problemDescription,
@@ -131,40 +135,20 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           {/* Metadata Row */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {/* Date input */}
             <div>
               <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
-                {activeProjectMeta.fields.primaryFieldLabel}
+                Date & Time
               </label>
-              <select
-                value={primaryFieldVal}
-                onChange={(e) => setPrimaryFieldVal(e.target.value)}
+              <input
+                type="datetime-local"
+                value={resolvedAt}
+                onChange={(e) => setResolvedAt(e.target.value)}
                 className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
-              >
-                {activeProjectMeta.fields.primaryOptions.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
-            <div>
-              <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
-                {activeProjectMeta.fields.secondaryFieldLabel}
-              </label>
-              <select
-                value={secondaryFieldVal}
-                onChange={(e) => setSecondaryFieldVal(e.target.value)}
-                className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
-              >
-                {activeProjectMeta.fields.secondaryOptions.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
-            </div>
-
+            {/* Status */}
             <div>
               <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
                 Status
@@ -182,18 +166,37 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
               </select>
             </div>
 
+            {/* Request Raised By */}
             <div>
               <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
-                Request Raised By (LEA)
+                Request Raised By
               </label>
               <select
                 value={raisedByName}
                 onChange={(e) => setRaisedByName(e.target.value)}
                 className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition font-medium"
               >
-                {LEA_RAISED_BY_OPTIONS.map((lea) => (
+                {raisedByList.map((lea) => (
                   <option key={lea} value={lea}>
                     {lea}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Primary category for CMS / TSOC */}
+            <div>
+              <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                {activeProjectMeta.fields.primaryFieldLabel}
+              </label>
+              <select
+                value={primaryFieldVal}
+                onChange={(e) => setPrimaryFieldVal(e.target.value)}
+                className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
+              >
+                {activeProjectMeta.fields.primaryOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
                   </option>
                 ))}
               </select>
@@ -204,13 +207,13 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-1">
-                Problem description / Activity Detail
+                {isTsoc ? "Problem Description" : "Problem description / Activity Detail"}
               </label>
               <textarea
                 rows={2}
                 value={problemDescription}
                 onChange={(e) => setProblemDescription(e.target.value)}
-                placeholder="Observed alarms, error logs, or symptoms..."
+                placeholder="Observed alarms, incident details, or symptoms..."
                 className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
                 required
               />
@@ -218,7 +221,7 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
 
             <div>
               <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-1">
-                Verified Solution Applied
+                Solution Applied
               </label>
               <textarea
                 rows={2}
@@ -257,7 +260,7 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
                 disabled={isSubmitting}
                 className="bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white disabled:opacity-50 text-white dark:text-slate-900 font-medium text-xs px-4 py-1.5 rounded-lg shadow-sm transition flex items-center space-x-1.5"
               >
-                <span>{isSubmitting ? "Saving..." : "Log Resolution"}</span>
+                <span>{isSubmitting ? "Saving..." : "Log Entry"}</span>
               </button>
             </div>
           </div>

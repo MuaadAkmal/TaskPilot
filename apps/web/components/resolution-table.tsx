@@ -68,6 +68,8 @@ export function ResolutionTable({
   const [selectedTaskForDetail, setSelectedTaskForDetail] = useState<MockTask | null>(null);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
 
+  const isTsoc = currentProject === "TSOC";
+
   const handleExportCSV = (scope: "filtered" | "all") => {
     const dataToExport = scope === "filtered" ? tasks : allTasks;
     if (dataToExport.length === 0) {
@@ -75,20 +77,33 @@ export function ResolutionTable({
       return;
     }
 
-    const rows = dataToExport.map((t) => ({
-      "Ticket ID": t.id,
-      Project: t.project,
-      [activeProjectMeta.fields.primaryFieldLabel]: t.tsp,
-      [activeProjectMeta.fields.secondaryFieldLabel]: t.lsa,
-      Status: t.status,
-      "Raised By": t.raisedByName,
-      "Created At": t.createdAt,
-      "Resolved At": t.resolvedAt || "",
-      "Downtime (Minutes)": t.downtimeMinutes || 0,
-      "Problem description / Activity Detail": t.problemDescription,
-      "Solution Applied": t.solution,
-      Remarks: t.remarks || "",
-    }));
+    const rows = dataToExport.map((t) => {
+      if (isTsoc) {
+        return {
+          "Ticket ID": t.id,
+          DATE: t.resolvedAt || t.createdAt,
+          STATUS: t.status,
+          "REQUEST RAISED BY": t.raisedByName,
+          "PROBLEM DESCRIPTION": t.problemDescription,
+          SOLUTION: t.solution,
+          REMARKS: t.remarks || "",
+        };
+      }
+      return {
+        "Ticket ID": t.id,
+        Project: t.project,
+        [activeProjectMeta.fields.primaryFieldLabel]: t.tsp,
+        [activeProjectMeta.fields.secondaryFieldLabel]: t.lsa,
+        Status: t.status,
+        "Request Raised By": t.raisedByName,
+        "Created At": t.createdAt,
+        "Resolved At": t.resolvedAt || "",
+        "Downtime (Minutes)": t.downtimeMinutes || 0,
+        "Problem description / Activity Detail": t.problemDescription,
+        "Solution Applied": t.solution,
+        Remarks: t.remarks || "",
+      };
+    });
 
     const csv = Papa.unparse(rows);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -119,18 +134,17 @@ export function ResolutionTable({
 
     const tableRows = dataToExport.map((t) => [
       t.id,
-      t.tsp,
-      t.lsa,
+      new Date(t.resolvedAt || t.createdAt).toLocaleDateString(),
       t.status,
-      t.problemDescription.slice(0, 50) + "...",
-      t.solution.slice(0, 50) + "...",
-      formatDowntime(t.downtimeMinutes),
-      t.raisedByName.split(" ")[0],
+      t.raisedByName,
+      t.problemDescription.slice(0, 45) + "...",
+      t.solution.slice(0, 45) + "...",
+      t.remarks || "-",
     ]);
 
     autoTable(doc, {
       startY: 26,
-      head: [["ID", activeProjectMeta.fields.primaryFieldLabel, activeProjectMeta.fields.secondaryFieldLabel, "Status", "Problem", "Solution Applied", "Downtime", "Raised By"]],
+      head: [["ID", "DATE", "STATUS", "REQUEST RAISED BY", "PROBLEM DESCRIPTION", "SOLUTION", "REMARKS"]],
       body: tableRows,
       theme: "plain",
       headStyles: { fillColor: [240, 240, 240], textColor: [40, 40, 40], fontStyle: "bold" },
@@ -174,25 +188,12 @@ export function ResolutionTable({
           </select>
 
           <select
-            value={lsa}
-            onChange={(e) => setLsa(e.target.value)}
-            className="text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-2 py-1.5 text-slate-700 dark:text-slate-200 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
-          >
-            <option value="ALL">All {activeProjectMeta.fields.secondaryFieldLabel}</option>
-            {activeProjectMeta.fields.secondaryOptions.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
-            ))}
-          </select>
-
-          <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
             className="text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-2 py-1.5 text-slate-700 dark:text-slate-200 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
           >
-            <option value="resolvedAt_desc">Latest</option>
-            <option value="resolvedAt_asc">Oldest</option>
+            <option value="resolvedAt_desc">Latest Date</option>
+            <option value="resolvedAt_asc">Oldest Date</option>
             <option value="downtime_desc">Downtime (High)</option>
             <option value="downtime_asc">Downtime (Low)</option>
           </select>
@@ -240,20 +241,35 @@ export function ResolutionTable({
       <div className="overflow-x-auto min-h-[360px]">
         <table className="w-full text-left text-xs">
           <thead>
-            <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 text-[11px] font-medium text-slate-400 dark:text-slate-400 uppercase tracking-wider">
-              <th className="py-2.5 px-3.5 w-14">#</th>
-              <th className="py-2.5 px-3 w-32">{activeProjectMeta.fields.primaryFieldLabel}</th>
-              <th className="py-2.5 px-4">Resolution Details</th>
-              <th className="py-2.5 px-3 w-20 text-center">Status</th>
-              <th className="py-2.5 px-3 w-20">Downtime</th>
-              <th className="py-2.5 px-3 w-24">Raised By</th>
-              <th className="py-2.5 px-3 w-16 text-right"></th>
-            </tr>
+            {isTsoc ? (
+              /* TSOC Exact Column Layout */
+              <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 text-[11px] font-medium text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+                <th className="py-2.5 px-3.5 w-14">#</th>
+                <th className="py-2.5 px-3 w-28">DATE</th>
+                <th className="py-2.5 px-3 w-24 text-center">STATUS</th>
+                <th className="py-2.5 px-3 w-36">REQUEST RAISED BY</th>
+                <th className="py-2.5 px-4">PROBLEM DESCRIPTION</th>
+                <th className="py-2.5 px-4">SOLUTION</th>
+                <th className="py-2.5 px-3 w-32">REMARKS</th>
+                <th className="py-2.5 px-3 w-16 text-right"></th>
+              </tr>
+            ) : (
+              /* Standard CMS Column Layout */
+              <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 text-[11px] font-medium text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+                <th className="py-2.5 px-3.5 w-14">#</th>
+                <th className="py-2.5 px-3 w-32">{activeProjectMeta.fields.primaryFieldLabel}</th>
+                <th className="py-2.5 px-4">Resolution Details</th>
+                <th className="py-2.5 px-3 w-20 text-center">Status</th>
+                <th className="py-2.5 px-3 w-20">Downtime</th>
+                <th className="py-2.5 px-3 w-24">Raised By</th>
+                <th className="py-2.5 px-3 w-16 text-right"></th>
+              </tr>
+            )}
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {tasks.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-14 text-center text-slate-400 dark:text-slate-500">
+                <td colSpan={isTsoc ? 8 : 7} className="py-14 text-center text-slate-400 dark:text-slate-500">
                   <Filter className="w-6 h-6 mx-auto mb-1 text-slate-300 dark:text-slate-600" />
                   <p className="text-xs font-medium text-slate-600 dark:text-slate-300">No records found</p>
                 </td>
@@ -266,36 +282,80 @@ export function ResolutionTable({
                     #{task.id}
                   </td>
 
-                  {/* TSP / Category */}
-                  <td className="py-3 px-3">
-                    <div className="font-semibold text-slate-900 dark:text-slate-100 text-xs">{task.tsp}</div>
-                    <div className="text-[10px] text-slate-400 dark:text-slate-500">{task.lsa}</div>
-                  </td>
+                  {isTsoc ? (
+                    <>
+                      {/* DATE */}
+                      <td className="py-3 px-3 text-slate-600 dark:text-slate-400 text-[11px] whitespace-nowrap">
+                        {new Date(task.resolvedAt || task.createdAt).toLocaleDateString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </td>
 
-                  {/* Problem & Solution */}
-                  <td className="py-3 px-4 max-w-sm">
-                    <p className="font-normal text-slate-800 dark:text-slate-200 line-clamp-1">{task.problemDescription}</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
-                      <span className="font-medium text-slate-700 dark:text-slate-300">Fix:</span> {task.solution}
-                    </p>
-                  </td>
+                      {/* STATUS */}
+                      <td className="py-3 px-3 text-center">
+                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/60">
+                          {task.status}
+                        </span>
+                      </td>
 
-                  {/* Status Badge */}
-                  <td className="py-3 px-3 text-center">
-                    <span className="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/60">
-                      {task.status}
-                    </span>
-                  </td>
+                      {/* REQUEST RAISED BY */}
+                      <td className="py-3 px-3 font-semibold text-slate-800 dark:text-slate-200 text-xs">
+                        {task.raisedByName}
+                      </td>
 
-                  {/* Downtime */}
-                  <td className="py-3 px-3 text-slate-600 dark:text-slate-400 text-[11px]">
-                    {formatDowntime(task.downtimeMinutes)}
-                  </td>
+                      {/* PROBLEM DESCRIPTION */}
+                      <td className="py-3 px-4 max-w-xs">
+                        <p className="font-normal text-slate-800 dark:text-slate-200 line-clamp-2">
+                          {task.problemDescription}
+                        </p>
+                      </td>
 
-                  {/* Raised By */}
-                  <td className="py-3 px-3 text-slate-500 dark:text-slate-400 text-[11px] truncate max-w-[100px]">
-                    {task.raisedByName.split(" ")[0]}
-                  </td>
+                      {/* SOLUTION */}
+                      <td className="py-3 px-4 max-w-xs font-mono text-[11px] text-slate-700 dark:text-slate-300">
+                        <p className="line-clamp-2">{task.solution}</p>
+                      </td>
+
+                      {/* REMARKS */}
+                      <td className="py-3 px-3 text-slate-500 dark:text-slate-400 text-[11px] max-w-[120px] truncate">
+                        {task.remarks || "-"}
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      {/* TSP / Category */}
+                      <td className="py-3 px-3">
+                        <div className="font-semibold text-slate-900 dark:text-slate-100 text-xs">{task.tsp}</div>
+                        <div className="text-[10px] text-slate-400 dark:text-slate-500">{task.lsa}</div>
+                      </td>
+
+                      {/* Problem & Solution */}
+                      <td className="py-3 px-4 max-w-sm">
+                        <p className="font-normal text-slate-800 dark:text-slate-200 line-clamp-1">{task.problemDescription}</p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                          <span className="font-medium text-slate-700 dark:text-slate-300">Fix:</span> {task.solution}
+                        </p>
+                      </td>
+
+                      {/* Status Badge */}
+                      <td className="py-3 px-3 text-center">
+                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/60">
+                          {task.status}
+                        </span>
+                      </td>
+
+                      {/* Downtime */}
+                      <td className="py-3 px-3 text-slate-600 dark:text-slate-400 text-[11px]">
+                        {formatDowntime(task.downtimeMinutes)}
+                      </td>
+
+                      {/* Raised By */}
+                      <td className="py-3 px-3 text-slate-500 dark:text-slate-400 text-[11px] truncate max-w-[100px]">
+                        {task.raisedByName}
+                      </td>
+                    </>
+                  )}
 
                   {/* Actions */}
                   <td className="py-3 px-3 text-right">

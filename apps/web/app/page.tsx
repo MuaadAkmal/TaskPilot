@@ -10,7 +10,7 @@ import { ProjectDocumentsView } from "@/components/project-documents-view";
 import { CopilotDrawer } from "@/components/copilot-drawer";
 import { ProjectCode, PROJECTS } from "@/lib/project-config";
 import { MockTask } from "@/lib/store";
-import { Users, Layers, BookOpen, Clock, Sparkles } from "lucide-react";
+import { Users, Layers, BookOpen, Clock } from "lucide-react";
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -26,7 +26,7 @@ function DashboardContent() {
   const [totalPages, setTotalPages] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Filters for CMS
+  // Filters
   const [search, setSearch] = useState<string>("");
   const [tsp, setTsp] = useState<string>("ALL");
   const [lsa, setLsa] = useState<string>("ALL");
@@ -34,10 +34,10 @@ function DashboardContent() {
   const [endDate, setEndDate] = useState<string>("");
   const [sort, setSort] = useState<string>("resolvedAt_desc");
 
-  const isCms = currentProject === "CMS" || (currentProject as string) === "CMS_VAL_FS";
+  const hasActiveTable = currentProject === "CMS" || (currentProject as string) === "CMS_VAL_FS" || currentProject === "TSOC";
 
   const fetchTasks = useCallback(async () => {
-    if (!isCms) return;
+    if (!hasActiveTable) return;
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -66,7 +66,7 @@ function DashboardContent() {
     } finally {
       setLoading(false);
     }
-  }, [currentProject, isCms, page, search, tsp, lsa, startDate, endDate, sort]);
+  }, [currentProject, hasActiveTable, page, search, tsp, lsa, startDate, endDate, sort]);
 
   useEffect(() => {
     fetchTasks();
@@ -109,7 +109,7 @@ function DashboardContent() {
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
-              <span>{isCms ? "Resolutions & Table" : "Overview"}</span>
+              <span>{hasActiveTable ? "Resolutions & Table" : "Overview"}</span>
             </button>
 
             <button
@@ -141,9 +141,9 @@ function DashboardContent() {
         {/* Tab 1: Primary Workspace Area */}
         {activeTab === "workspace" && (
           <>
-            {isCms ? (
+            {hasActiveTable ? (
               <>
-                {/* CMS has active form + 8-record paginated resolution table */}
+                {/* Active form + paginated resolution table for CMS & TSOC */}
                 <ResolutionForm project={currentProject} onRecordCreated={fetchTasks} />
                 <ResolutionTable
                   currentProject={currentProject}
@@ -169,7 +169,7 @@ function DashboardContent() {
                 />
               </>
             ) : (
-              /* Other modules (CDR, IPDR, CIAS, MCX, TSOC, ASR): Clean placeholder awaiting custom schema discussion */
+              /* Other modules (CDR, IPDR, CIAS, MCX, ASR): Clean placeholder awaiting custom schema discussion */
               <div className="bg-white dark:bg-slate-900/90 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-card p-8 text-center">
                 <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center mx-auto mb-3">
                   <Clock className="w-6 h-6" />

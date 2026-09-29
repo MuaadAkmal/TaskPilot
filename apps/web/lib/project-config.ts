@@ -20,6 +20,7 @@ export interface ProjectMeta {
     secondaryFieldLabel: string;
     primaryOptions: readonly string[];
     secondaryOptions: readonly string[];
+    raisedByOptions: readonly string[];
   };
 }
 
@@ -57,7 +58,7 @@ export const LSAS = [
   "Himachal Pradesh",
 ] as const;
 
-export const LEA_RAISED_BY_OPTIONS = [
+export const CMS_LEA_RAISED_BY_OPTIONS = [
   "DOT",
   "DOT & LEA",
   "CBDT",
@@ -73,6 +74,13 @@ export const LEA_RAISED_BY_OPTIONS = [
   "CDOT",
 ] as const;
 
+export const TSOC_RAISED_BY_OPTIONS = [
+  "CDOT",
+  "VENDOR",
+  "CLIENT",
+  "ITI DC TEAM",
+] as const;
+
 export const PROJECTS: ProjectMeta[] = [
   {
     code: "CMS",
@@ -85,6 +93,21 @@ export const PROJECTS: ProjectMeta[] = [
       secondaryFieldLabel: "LSA (Service Circle)",
       primaryOptions: TSPS,
       secondaryOptions: LSAS,
+      raisedByOptions: CMS_LEA_RAISED_BY_OPTIONS,
+    },
+  },
+  {
+    code: "TSOC",
+    name: "TSOC (Telecom Security Operations Center)",
+    badge: "TSOC",
+    description: "Telecom Security Operations Center, Threat Hunting & Incident Response",
+    color: "bg-rose-600 text-white",
+    fields: {
+      primaryFieldLabel: "Category / Threat Area",
+      secondaryFieldLabel: "System / Tier",
+      primaryOptions: ["SS7/Diameter Attack", "DDoS Mitigation", "Rogue BTS / IMSI Catcher", "Malicious Traffic Surge", "BGP Hijack Alert", "Firewall / Perimeter", "System Infrastructure"],
+      secondaryOptions: ["Circle Border Gateway", "Core Packet Switched", "Signaling Core", "Interconnect Gateway", "DC Server Stack", "Management OOB"],
+      raisedByOptions: TSOC_RAISED_BY_OPTIONS,
     },
   },
   {
@@ -98,6 +121,7 @@ export const PROJECTS: ProjectMeta[] = [
       secondaryFieldLabel: "Region / Circle",
       primaryOptions: TSPS,
       secondaryOptions: LSAS,
+      raisedByOptions: CMS_LEA_RAISED_BY_OPTIONS,
     },
   },
   {
@@ -111,6 +135,7 @@ export const PROJECTS: ProjectMeta[] = [
       secondaryFieldLabel: "Zone / Node",
       primaryOptions: TSPS,
       secondaryOptions: LSAS,
+      raisedByOptions: CMS_LEA_RAISED_BY_OPTIONS,
     },
   },
   {
@@ -136,6 +161,7 @@ export const PROJECTS: ProjectMeta[] = [
         "Secure Vault Zone",
         "Partner Peering Hub",
       ],
+      raisedByOptions: CMS_LEA_RAISED_BY_OPTIONS,
     },
   },
   {
@@ -149,19 +175,7 @@ export const PROJECTS: ProjectMeta[] = [
       secondaryFieldLabel: "Cluster / Site",
       primaryOptions: ["MC-PTT Server", "MC-Video Gateway", "MC-Data Broker", "Floor Control Agent", "Key Management Server"],
       secondaryOptions: ["Core-DC-Primary", "Core-DC-Secondary", "Edge-Node-01", "Edge-Node-02"],
-    },
-  },
-  {
-    code: "TSOC",
-    name: "TSOC (Telecom Security Operations Center)",
-    badge: "TSOC",
-    description: "Telecom Security Operations Center, Threat Hunting & Incident Response",
-    color: "bg-rose-600 text-white",
-    fields: {
-      primaryFieldLabel: "Threat Vector / Category",
-      secondaryFieldLabel: "Monitored Tier",
-      primaryOptions: ["SS7/Diameter Attack", "DDoS Mitigation", "Rogue BTS / IMSI Catcher", "Malicious Traffic Surge", "BGP Hijack Alert"],
-      secondaryOptions: ["Circle Border Gateway", "Core Packet Switched", "Signaling Core", "Interconnect Gateway"],
+      raisedByOptions: CMS_LEA_RAISED_BY_OPTIONS,
     },
   },
   {
@@ -187,9 +201,12 @@ export const PROJECTS: ProjectMeta[] = [
         "Streaming-Buffer-DC1",
         "Edge-Transcriber-PoP",
       ],
+      raisedByOptions: CMS_LEA_RAISED_BY_OPTIONS,
     },
   },
 ];
+
+export const LEA_RAISED_BY_OPTIONS = CMS_LEA_RAISED_BY_OPTIONS;
 
 export const STATUS_OPTIONS = [
   { value: "RESOLVED", label: "Resolved", color: "bg-emerald-100 text-emerald-800 border-emerald-200" },
