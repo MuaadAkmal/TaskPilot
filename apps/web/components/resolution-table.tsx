@@ -6,7 +6,6 @@ import { ProjectCode, PROJECTS } from "@/lib/project-config";
 import { formatDowntime } from "@/lib/utils";
 import {
   Search,
-  Calendar,
   Download,
   Edit3,
   Eye,
@@ -69,7 +68,6 @@ export function ResolutionTable({
   const [selectedTaskForDetail, setSelectedTaskForDetail] = useState<MockTask | null>(null);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
 
-  // CSV Export
   const handleExportCSV = (scope: "filtered" | "all") => {
     const dataToExport = scope === "filtered" ? tasks : allTasks;
     if (dataToExport.length === 0) {
@@ -102,76 +100,70 @@ export function ResolutionTable({
     link.click();
     document.body.removeChild(link);
     setExportMenuOpen(false);
-    toast.success(`Exported ${dataToExport.length} records to CSV.`);
+    toast.success(`Exported ${dataToExport.length} records.`);
   };
 
-  // PDF Report Export
   const handleExportPDF = () => {
     const dataToExport = allTasks.length > 0 ? allTasks : tasks;
     if (dataToExport.length === 0) {
-      toast.error("No records available to export.");
+      toast.error("No records to export.");
       return;
     }
 
     const doc = new jsPDF({ orientation: "landscape" });
-
-    // Document Title
-    doc.setFontSize(16);
-    doc.setTextColor(79, 70, 229);
+    doc.setFontSize(14);
     doc.text(`TaskPilot - ${activeProjectMeta.name} Incident Report`, 14, 15);
-
-    doc.setFontSize(10);
-    doc.setTextColor(100, 116, 139);
-    doc.text(`Generated on: ${new Date().toLocaleString()} | Total Records: ${dataToExport.length}`, 14, 22);
+    doc.setFontSize(9);
+    doc.setTextColor(100);
+    doc.text(`Generated: ${new Date().toLocaleString()} | Total Records: ${dataToExport.length}`, 14, 21);
 
     const tableRows = dataToExport.map((t) => [
       t.id,
       t.tsp,
       t.lsa,
       t.status,
-      t.problemDescription.slice(0, 60) + "...",
-      t.solution.slice(0, 60) + "...",
+      t.problemDescription.slice(0, 50) + "...",
+      t.solution.slice(0, 50) + "...",
       formatDowntime(t.downtimeMinutes),
       t.raisedByName.split(" ")[0],
     ]);
 
     autoTable(doc, {
-      startY: 28,
+      startY: 26,
       head: [["ID", activeProjectMeta.fields.primaryFieldLabel, activeProjectMeta.fields.secondaryFieldLabel, "Status", "Problem", "Solution Applied", "Downtime", "Raised By"]],
       body: tableRows,
-      theme: "striped",
-      headStyles: { fillColor: [79, 70, 229] },
-      styles: { fontSize: 8, cellPadding: 3 },
+      theme: "plain",
+      headStyles: { fillColor: [240, 240, 240], textColor: [40, 40, 40], fontStyle: "bold" },
+      styles: { fontSize: 8, cellPadding: 2.5 },
     });
 
     doc.save(`taskpilot_${currentProject}_report_${Date.now()}.pdf`);
     setExportMenuOpen(false);
-    toast.success("PDF Report generated successfully.");
+    toast.success("PDF generated.");
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col">
-      {/* Controls & Filter Toolbar */}
-      <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-wrap gap-2.5 items-center justify-between">
-        {/* Left: Search input */}
-        <div className="relative flex-1 min-w-[220px]">
-          <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+    <div className="bg-white rounded-xl border border-slate-200/80 shadow-card overflow-hidden flex flex-col">
+      {/* Minimal Filter Toolbar */}
+      <div className="p-3.5 border-b border-slate-100 flex flex-wrap gap-2 items-center justify-between">
+        {/* Search */}
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={`Search ${activeProjectMeta.name} problem, fix, remarks...`}
-            className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
+            placeholder={`Search ${activeProjectMeta.name}...`}
+            className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200/80 rounded-lg focus:bg-white focus:outline-none focus:border-slate-400 transition"
           />
         </div>
 
-        {/* Dropdowns */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Primary filter */}
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-1.5">
           <select
             value={tsp}
             onChange={(e) => setTsp(e.target.value)}
-            className="text-xs bg-white border border-slate-300 rounded-xl px-2.5 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
+            className="text-xs bg-slate-50 border border-slate-200/80 rounded-lg px-2 py-1.5 text-slate-700 focus:bg-white focus:outline-none focus:border-slate-400 transition"
           >
             <option value="ALL">All {activeProjectMeta.fields.primaryFieldLabel}</option>
             {activeProjectMeta.fields.primaryOptions.map((opt) => (
@@ -181,11 +173,10 @@ export function ResolutionTable({
             ))}
           </select>
 
-          {/* Secondary filter */}
           <select
             value={lsa}
             onChange={(e) => setLsa(e.target.value)}
-            className="text-xs bg-white border border-slate-300 rounded-xl px-2.5 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
+            className="text-xs bg-slate-50 border border-slate-200/80 rounded-lg px-2 py-1.5 text-slate-700 focus:bg-white focus:outline-none focus:border-slate-400 transition"
           >
             <option value="ALL">All {activeProjectMeta.fields.secondaryFieldLabel}</option>
             {activeProjectMeta.fields.secondaryOptions.map((opt) => (
@@ -195,52 +186,49 @@ export function ResolutionTable({
             ))}
           </select>
 
-          {/* Sort selector */}
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="text-xs bg-white border border-slate-300 rounded-xl px-2.5 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
+            className="text-xs bg-slate-50 border border-slate-200/80 rounded-lg px-2 py-1.5 text-slate-700 focus:bg-white focus:outline-none focus:border-slate-400 transition"
           >
-            <option value="resolvedAt_desc">Latest Resolved</option>
-            <option value="resolvedAt_asc">Oldest Resolved</option>
-            <option value="downtime_desc">Highest Downtime</option>
-            <option value="downtime_asc">Lowest Downtime</option>
-            <option value="tsp_asc">Sort Category (A-Z)</option>
+            <option value="resolvedAt_desc">Latest</option>
+            <option value="resolvedAt_asc">Oldest</option>
+            <option value="downtime_desc">Downtime (High)</option>
+            <option value="downtime_asc">Downtime (Low)</option>
           </select>
 
-          {/* Export Dropdown Button */}
+          {/* Export Button */}
           <div className="relative">
             <button
               onClick={() => setExportMenuOpen(!exportMenuOpen)}
-              className="flex items-center space-x-1.5 text-xs bg-white border border-slate-300 hover:border-slate-400 text-slate-700 px-3 py-2 rounded-xl shadow-xs transition"
+              className="flex items-center space-x-1 text-xs bg-slate-50 border border-slate-200/80 hover:bg-slate-100 text-slate-700 px-2.5 py-1.5 rounded-lg transition"
             >
-              <Download className="w-3.5 h-3.5 text-indigo-600" />
-              <span className="font-semibold">Export</span>
+              <Download className="w-3.5 h-3.5 text-slate-500" />
+              <span>Export</span>
             </button>
 
             {exportMenuOpen && (
-              <div className="absolute right-0 mt-1.5 w-52 bg-white border border-slate-200 rounded-xl shadow-xl py-1.5 z-30">
-                <div className="px-3 py-1 text-[10px] uppercase font-bold text-slate-400">Export Options</div>
+              <div className="absolute right-0 mt-1.5 w-48 bg-white border border-slate-200/80 rounded-xl shadow-card py-1 z-30 animate-in fade-in zoom-in-95 duration-100">
                 <button
                   onClick={() => handleExportCSV("filtered")}
-                  className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 flex items-center space-x-2 text-slate-700"
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 text-slate-700 flex items-center space-x-2"
                 >
-                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-                  <span>Export CSV (Current View)</span>
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>CSV (Current View)</span>
                 </button>
                 <button
                   onClick={() => handleExportCSV("all")}
-                  className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 flex items-center space-x-2 text-slate-700"
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 text-slate-700 flex items-center space-x-2"
                 >
-                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-                  <span>Export CSV (All Records)</span>
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>CSV (All Records)</span>
                 </button>
                 <button
                   onClick={handleExportPDF}
-                  className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 flex items-center space-x-2 text-slate-700 border-t border-slate-100"
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 text-slate-700 flex items-center space-x-2 border-t border-slate-100"
                 >
-                  <FileText className="w-4 h-4 text-rose-600" />
-                  <span>Export PDF Report</span>
+                  <FileText className="w-3.5 h-3.5 text-rose-500" />
+                  <span>PDF Summary</span>
                 </button>
               </div>
             )}
@@ -248,86 +236,81 @@ export function ResolutionTable({
         </div>
       </div>
 
-      {/* Table Data */}
-      <div className="overflow-x-auto min-h-[380px]">
-        <table className="w-full text-left text-xs text-slate-600">
-          <thead className="bg-slate-100 text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 sticky top-0">
-            <tr>
-              <th className="py-3 px-3.5 w-16">ID</th>
-              <th className="py-3 px-3 w-32">{activeProjectMeta.fields.primaryFieldLabel} / {activeProjectMeta.fields.secondaryFieldLabel}</th>
-              <th className="py-3 px-4">Problem & Solution Overview</th>
-              <th className="py-3 px-3 w-24 text-center">Status</th>
-              <th className="py-3 px-3 w-24">Downtime</th>
-              <th className="py-3 px-3 w-28">Raised By</th>
-              <th className="py-3 px-3 w-24 text-center">Actions</th>
+      {/* Clean Minimal Table */}
+      <div className="overflow-x-auto min-h-[360px]">
+        <table className="w-full text-left text-xs">
+          <thead>
+            <tr className="border-b border-slate-100 bg-slate-50/50 text-[11px] font-medium text-slate-400 uppercase tracking-wider">
+              <th className="py-2.5 px-3.5 w-14">#</th>
+              <th className="py-2.5 px-3 w-32">{activeProjectMeta.fields.primaryFieldLabel}</th>
+              <th className="py-2.5 px-4">Resolution Details</th>
+              <th className="py-2.5 px-3 w-20 text-center">Status</th>
+              <th className="py-2.5 px-3 w-20">Downtime</th>
+              <th className="py-2.5 px-3 w-24">Raised By</th>
+              <th className="py-2.5 px-3 w-16 text-right"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {tasks.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-16 text-center text-slate-400">
-                  <Filter className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                  <p className="font-semibold text-slate-600">No matching resolution records found for {activeProjectMeta.name}</p>
-                  <p className="text-[11px] mt-0.5">Try adjusting your filters or record a new task above.</p>
+                <td colSpan={7} className="py-14 text-center text-slate-400">
+                  <Filter className="w-6 h-6 mx-auto mb-1 text-slate-300" />
+                  <p className="text-xs font-medium text-slate-600">No records found</p>
                 </td>
               </tr>
             ) : (
               tasks.map((task) => (
-                <tr key={task.id} className="hover:bg-indigo-50/30 transition">
+                <tr key={task.id} className="hover:bg-slate-50/80 transition group">
                   {/* ID */}
-                  <td className="py-3 px-3.5 font-mono font-bold text-indigo-600 text-xs">
+                  <td className="py-3 px-3.5 font-mono text-slate-400 text-[11px]">
                     #{task.id}
                   </td>
 
-                  {/* Primary & Secondary values */}
+                  {/* TSP / Category */}
                   <td className="py-3 px-3">
-                    <div className="font-bold text-slate-800 text-xs">{task.tsp}</div>
-                    <div className="text-[10px] text-slate-400 font-medium">{task.lsa}</div>
+                    <div className="font-semibold text-slate-900 text-xs">{task.tsp}</div>
+                    <div className="text-[10px] text-slate-400">{task.lsa}</div>
                   </td>
 
                   {/* Problem & Solution */}
-                  <td className="py-3 px-4 max-w-xs md:max-w-sm">
-                    <div className="font-medium text-slate-900 line-clamp-1 mb-0.5">
-                      {task.problemDescription}
-                    </div>
-                    <div className="text-[11px] text-emerald-800 line-clamp-1 bg-emerald-50/60 px-2 py-0.5 rounded border border-emerald-100">
-                      <strong className="font-semibold text-emerald-900">Fix:</strong> {task.solution}
-                    </div>
+                  <td className="py-3 px-4 max-w-sm">
+                    <p className="font-normal text-slate-800 line-clamp-1">{task.problemDescription}</p>
+                    <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
+                      <span className="font-medium text-slate-700">Fix:</span> {task.solution}
+                    </p>
                   </td>
 
                   {/* Status Badge */}
                   <td className="py-3 px-3 text-center">
-                    <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    <span className="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
                       {task.status}
                     </span>
                   </td>
 
                   {/* Downtime */}
-                  <td className="py-3 px-3 font-medium text-slate-700">
-                    <span className="px-1.5 py-0.5 bg-slate-100 rounded text-[11px]">
-                      {formatDowntime(task.downtimeMinutes)}
-                    </span>
+                  <td className="py-3 px-3 text-slate-600 text-[11px]">
+                    {formatDowntime(task.downtimeMinutes)}
                   </td>
 
                   {/* Raised By */}
-                  <td className="py-3 px-3 text-slate-600 text-[11px]">
-                    {task.raisedByName}
+                  <td className="py-3 px-3 text-slate-500 text-[11px] truncate max-w-[100px]">
+                    {task.raisedByName.split(" ")[0]}
                   </td>
 
-                  {/* Row Actions */}
-                  <td className="py-3 px-3 text-center">
-                    <div className="flex items-center justify-center space-x-1.5">
+                  {/* Actions */}
+                  <td className="py-3 px-3 text-right">
+                    <div className="flex items-center justify-end space-x-1 opacity-70 group-hover:opacity-100 transition">
                       <button
                         onClick={() => setSelectedTaskForDetail(task)}
-                        title="View Full Details"
-                        className="p-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition"
+                        title="View"
+                        className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-slate-900 transition"
                       >
                         <Eye className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => setSelectedTaskForEdit(task)}
-                        title="Edit Resolution"
-                        className="p-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg transition"
+                        title="Edit"
+                        className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-slate-900 transition"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
                       </button>
@@ -340,39 +323,35 @@ export function ResolutionTable({
         </table>
       </div>
 
-      {/* Pagination Footer (Exactly 8 entries per page) */}
-      <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
-        <div>
-          Showing <strong>{tasks.length > 0 ? (page - 1) * 8 + 1 : 0}</strong> -{" "}
-          <strong>{Math.min(page * 8, total)}</strong> of <strong>{total}</strong> records (8 per page)
-        </div>
+      {/* Pagination Footer (Exactly 8 records per page) */}
+      <div className="px-4 py-2.5 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+        <span className="text-[11px]">
+          {tasks.length > 0 ? (page - 1) * 8 + 1 : 0}-{Math.min(page * 8, total)} of {total} records
+        </span>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1.5">
           <button
             onClick={() => onPageChange(page - 1)}
             disabled={page <= 1}
-            className="flex items-center space-x-1 px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-xs font-semibold transition"
+            className="p-1 rounded hover:bg-slate-200/60 disabled:opacity-30 disabled:hover:bg-transparent transition text-slate-600"
           >
-            <ChevronLeft className="w-3.5 h-3.5" />
-            <span>Previous</span>
+            <ChevronLeft className="w-4 h-4" />
           </button>
 
-          <span className="px-2 text-xs font-bold text-slate-700">
-            Page {page} of {totalPages || 1}
+          <span className="text-[11px] font-medium text-slate-700 px-1">
+            {page} / {totalPages || 1}
           </span>
 
           <button
             onClick={() => onPageChange(page + 1)}
             disabled={page >= totalPages}
-            className="flex items-center space-x-1 px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-xs font-semibold transition"
+            className="p-1 rounded hover:bg-slate-200/60 disabled:opacity-30 disabled:hover:bg-transparent transition text-slate-600"
           >
-            <span>Next</span>
-            <ChevronRight className="w-3.5 h-3.5" />
+            <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      {/* Edit Modal */}
       {selectedTaskForEdit && (
         <ResolutionEditModal
           task={selectedTaskForEdit}
@@ -384,7 +363,6 @@ export function ResolutionTable({
         />
       )}
 
-      {/* Detail Modal */}
       {selectedTaskForDetail && (
         <ResolutionDetailModal
           task={selectedTaskForDetail}

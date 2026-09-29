@@ -8,7 +8,7 @@ import { ResolutionTable } from "@/components/resolution-table";
 import { CopilotDrawer } from "@/components/copilot-drawer";
 import { ProjectCode, PROJECTS } from "@/lib/project-config";
 import { MockTask } from "@/lib/store";
-import { RefreshCw } from "lucide-react";
+import { RotateCw } from "lucide-react";
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -67,43 +67,39 @@ function DashboardContent() {
   const activeProjectMeta = PROJECTS.find((p) => p.code === currentProject) || PROJECTS[0];
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-[#fafafa]">
       <Header currentProject={currentProject} />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
-        {/* Project Breadcrumb & Quick Stats */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6">
+        {/* Minimal Page Header */}
+        <div className="mb-5 flex items-center justify-between">
           <div>
-            <div className="flex items-center space-x-2">
-              <span className="text-xs uppercase font-bold text-indigo-600 tracking-wider">
-                Workspace / {activeProjectMeta.name}
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mt-0.5">
-              Incident & Task Resolutions
+            <h1 className="text-lg font-semibold text-slate-900 tracking-tight">
+              {activeProjectMeta.name} Resolutions
             </h1>
-            <p className="text-xs text-slate-500 mt-1 max-w-2xl">{activeProjectMeta.description}</p>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {activeProjectMeta.description}
+            </p>
           </div>
 
-          <div className="flex items-center space-x-3">
-            <div className="bg-white border border-slate-200 px-3.5 py-1.5 rounded-xl shadow-xs text-xs flex items-center space-x-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="font-semibold text-slate-700">{total} Total Resolved</span>
-            </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-xs font-medium text-slate-400">
+              {total} entries
+            </span>
             <button
               onClick={fetchTasks}
-              className="p-2 bg-white border border-slate-200 hover:bg-slate-100 rounded-xl text-slate-600 transition shadow-xs"
-              title="Refresh Records"
+              className="p-1.5 hover:bg-slate-200/50 rounded-lg text-slate-400 hover:text-slate-600 transition"
+              title="Refresh"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-indigo-600" : ""}`} />
+              <RotateCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
             </button>
           </div>
         </div>
 
-        {/* 1. Inline Form (Top of Table) */}
+        {/* 1. Minimal Collapsible Form */}
         <ResolutionForm project={currentProject} onRecordCreated={fetchTasks} />
 
-        {/* 2. Interactive Paginated Table (8 entries per page) */}
+        {/* 2. Minimal Resolution Table (8 items/page) */}
         <ResolutionTable
           currentProject={currentProject}
           tasks={tasks}
@@ -136,7 +132,7 @@ function DashboardContent() {
 
 export default function DashboardPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-xs text-slate-500">Loading TaskPilot...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading...</div>}>
       <DashboardContent />
     </Suspense>
   );
