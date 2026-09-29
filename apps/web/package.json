@@ -9,7 +9,8 @@
     "lint": "next lint",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
-    "prisma:seed": "node -r esbuild-register prisma/seed.ts"
+    "prisma:seed": "node -r esbuild-register prisma/seed.ts",
+    "prisma:seed:employees": "node prisma/seed-employees.js"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.39.7",

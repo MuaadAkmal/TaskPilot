@@ -9,11 +9,13 @@ generator client {
 
 model User {
   id                  String   @id @default(uuid())
-  clerkId             String   @unique
+  clerkId             String?  @unique
   email               String   @unique
   name                String?
+  employeeId          String?  @unique
+  pbx                 String?  // Internal PBX extension e.g. "9622"
   title               String?  // e.g. "Senior NOC Engineer", "L2 Tech Lead", "Field Operations Lead"
-  projects            String   // JSON array of assigned project codes ["CMS_VAL_FS", "ASR", "CIAS"]
+  projects            String   @default("[\"CMS_VAL_FS\",\"ASR\",\"CIAS\",\"TSOC\",\"CDR\",\"IPDR\",\"MCX\"]") // JSON array of assigned project codes
   role                String   @default("ENGINEER") // ADMIN, TEAM_LEAD, ENGINEER
   receiveEmailAlerts  Boolean  @default(true) // Tick mark: If false, user is opted out from team broadcast emails
   alertOnProjects     String   @default("ALL") // "ALL" or specific JSON array of project codes
