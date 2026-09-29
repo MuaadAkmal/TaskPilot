@@ -2,7 +2,7 @@ import os
 from typing import Optional, List, Dict, Any
 from dotenv import load_dotenv
 
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain.agents import create_tool_calling_agent, AgentExecutor
@@ -24,13 +24,16 @@ CRITICAL RULES:
 3. Be professional, concise, and technical. Format your response cleanly using GitHub-flavored Markdown.
 """
 
-def build_agent_executor(project: str, gemini_api_key: Optional[str] = None):
-    api_key = gemini_api_key or os.getenv("GEMINI_API_KEY", "")
+def build_agent_executor(project: str):
+    # Support locally hosted LLMs (Ollama, vLLM, LM Studio, LocalAI) via OpenAI-compatible API
+    local_base_url = os.getenv("LOCAL_LLM_BASE_URL", "http://localhost:11434/v1")
+    local_model = os.getenv("LOCAL_LLM_MODEL", "llama3.1")
+    api_key = os.getenv("LOCAL_LLM_API_KEY", "dummy-key")
     
-    # Initialize Google Gemini Chat model via LangChain
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
-        google_api_key=api_key,
+    llm = ChatOpenAI(
+        base_url=local_base_url,
+        api_key=api_key,
+        model=local_model,
         temperature=0.2,
     )
 
@@ -41,9 +44,7 @@ def build_agent_executor(project: str, gemini_api_key: Optional[str] = None):
         MessagesPlaceholder(variable_name="agent_scratchpad"),
     ])
 
-    # Agent Tools will be registered here (database hybrid retrieval, SOP lookup, etc.)
     tools = []
-    
     agent = create_tool_calling_agent(llm, tools, prompt)
     executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
     return executor
