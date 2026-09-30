@@ -120,6 +120,7 @@ export function ResolutionTable({
         { id: "problemDescription", label: "TASK DONE", getValue: (t) => t.problemDescription },
         { id: "solution", label: "INFERENCE", getValue: (t) => t.solution },
         { id: "status", label: "STATUS", getValue: (t) => t.status },
+        { id: "createdByName", label: "RECORDED BY", getValue: (t) => t.createdByName || t.createdByEmail || "NOC Engineer" },
         { id: "remarks", label: "REMARKS", getValue: (t) => t.remarks || "" },
       ];
     }
@@ -751,7 +752,7 @@ export function ResolutionTable({
         <table className="w-full text-left text-xs table-fixed">
           <thead>
             {isAsr ? (
-              /* ASR Columns: DATE, SUBJECT, TASK DONE, INFERENCE, STATUS */
+              /* ASR Columns: DATE, SUBJECT, TASK DONE, INFERENCE, STATUS, RECORDED BY */
               <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 text-[11px] font-medium text-slate-400 dark:text-slate-400 uppercase tracking-wider">
                 <th className="py-2.5 px-3 w-8" onClick={(e) => e.stopPropagation()}>
                   <button onClick={toggleSelectAllRows} className="flex items-center justify-center">
@@ -773,10 +774,11 @@ export function ResolutionTable({
                     <ArrowUpDown className="w-3 h-3 text-slate-400" />
                   </div>
                 </th>
-                <th className="py-2.5 px-3 w-44">SUBJECT</th>
-                <th className="py-2.5 px-3 w-[32%]">TASK DONE</th>
-                <th className="py-2.5 px-3 w-[32%]">INFERENCE</th>
+                <th className="py-2.5 px-3 w-36">SUBJECT</th>
+                <th className="py-2.5 px-3 min-w-[260px] w-[35%]">TASK DONE</th>
+                <th className="py-2.5 px-3 min-w-[260px] w-[35%]">INFERENCE</th>
                 <th className="py-2.5 px-3 w-24">STATUS</th>
+                <th className="py-2.5 px-3 w-36">RECORDED BY</th>
                 <th className="py-2.5 px-3 text-right w-16">Actions</th>
               </tr>
             ) : isCdrOrIpdr ? (
@@ -949,13 +951,22 @@ export function ResolutionTable({
                       <td className="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-200 truncate">
                         {task.tsp || "General"}
                       </td>
-                      <td className="py-2.5 px-3 text-slate-800 dark:text-slate-200 truncate font-medium">
-                        {task.problemDescription}
+                      <td className="py-2.5 px-3 text-slate-800 dark:text-slate-200 font-medium leading-relaxed">
+                        <div className="line-clamp-2 break-words" title={task.problemDescription}>
+                          {task.problemDescription}
+                        </div>
                       </td>
-                      <td className="py-2.5 px-3 text-slate-700 dark:text-slate-300 truncate font-mono text-[11px]">
-                        {task.solution}
+                      <td className="py-2.5 px-3 text-slate-700 dark:text-slate-300 font-mono text-[11px] leading-relaxed">
+                        <div className="line-clamp-2 break-words" title={task.solution}>
+                          {task.solution}
+                        </div>
                       </td>
                       <td className="py-2.5 px-3">{getStatusBadge(task.status)}</td>
+                      <td className="py-2.5 px-3 font-medium text-slate-700 dark:text-slate-300 truncate" title={task.createdByName ? `${task.createdByName} (${task.createdByEmail || ''})` : (task.createdByEmail || 'NOC Engineer')}>
+                        <span className="inline-flex items-center space-x-1">
+                          <span>{task.createdByName || task.createdByEmail || "NOC Engineer"}</span>
+                        </span>
+                      </td>
                     </>
                   ) : isCdrOrIpdr ? (
                     <>
