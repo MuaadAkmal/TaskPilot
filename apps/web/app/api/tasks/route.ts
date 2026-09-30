@@ -46,10 +46,28 @@ export async function GET(req: Request) {
         if (endDate) whereClause.resolvedAt.lte = new Date(endDate);
       }
 
-      let orderBy: any = { resolvedAt: "desc" };
-      if (sort === "resolvedAt_asc") orderBy = { resolvedAt: "asc" };
-      if (sort === "downtime_desc") orderBy = { downtimeMinutes: "desc" };
-      if (sort === "downtime_asc") orderBy = { downtimeMinutes: "asc" };
+      let orderBy: any = [
+        { resolvedAt: { sort: "desc", nulls: "last" } },
+        { createdAt: "desc" },
+        { id: "desc" },
+      ];
+      if (sort === "resolvedAt_asc") {
+        orderBy = [
+          { resolvedAt: { sort: "asc", nulls: "last" } },
+          { createdAt: "asc" },
+          { id: "asc" },
+        ];
+      } else if (sort === "resolvedAt_desc") {
+        orderBy = [
+          { resolvedAt: { sort: "desc", nulls: "last" } },
+          { createdAt: "desc" },
+          { id: "desc" },
+        ];
+      } else if (sort === "downtime_desc") {
+        orderBy = [{ downtimeMinutes: "desc" }, { id: "desc" }];
+      } else if (sort === "downtime_asc") {
+        orderBy = [{ downtimeMinutes: "asc" }, { id: "asc" }];
+      }
 
       const [total, dbTasks, allMatching] = await Promise.all([
         prisma.taskResolution.count({ where: whereClause }),

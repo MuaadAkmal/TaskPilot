@@ -753,7 +753,16 @@ export function ResolutionTable({
                 <th className="py-2.5 px-3.5 w-12">#</th>
                 <th className="py-2.5 px-3 w-16">LSA</th>
                 <th className="py-2.5 px-3 w-28">TSP</th>
-                <th className="py-2.5 px-3 w-36">DATE</th>
+                <th
+                  className="py-2.5 px-3 w-36 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 select-none"
+                  onClick={() => setSort(sort === "resolvedAt_desc" ? "resolvedAt_asc" : "resolvedAt_desc")}
+                  title="Click to sort by resolved date"
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>DATE</span>
+                    <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                  </div>
+                </th>
                 <th className="py-2.5 px-3 w-24">STATUS</th>
                 <th className="py-2.5 px-3 w-36">REQUEST RAISED BY</th>
                 <th className="py-2.5 px-3 w-[28%]">PROBLEM DESCRIPTION</th>
@@ -777,7 +786,16 @@ export function ResolutionTable({
                 <th className="py-2.5 px-3 w-32">Device Location</th>
                 <th className="py-2.5 px-3 w-24">Status</th>
                 <th className="py-2.5 px-3 w-36">Request Raised By</th>
-                <th className="py-2.5 px-3 w-36">Date</th>
+                <th
+                  className="py-2.5 px-3 w-36 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 select-none"
+                  onClick={() => setSort(sort === "resolvedAt_desc" ? "resolvedAt_asc" : "resolvedAt_desc")}
+                  title="Click to sort by resolved date"
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Date</span>
+                    <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                  </div>
+                </th>
                 <th className="py-2.5 px-3 w-[30%]">Problem</th>
                 <th className="py-2.5 px-3 w-[30%]">Solution</th>
                 <th className="py-2.5 px-3 w-28">Remarks</th>
@@ -796,7 +814,16 @@ export function ResolutionTable({
                   </button>
                 </th>
                 <th className="py-2.5 px-3.5 w-12">#</th>
-                <th className="py-2.5 px-3 w-36">DATE</th>
+                <th
+                  className="py-2.5 px-3 w-36 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 select-none"
+                  onClick={() => setSort(sort === "resolvedAt_desc" ? "resolvedAt_asc" : "resolvedAt_desc")}
+                  title="Click to sort by resolved date"
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>DATE</span>
+                    <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                  </div>
+                </th>
                 <th className="py-2.5 px-3 w-24">STATUS</th>
                 <th className="py-2.5 px-3 w-36">REQUEST RAISED BY</th>
                 <th className="py-2.5 px-3 w-[34%]">PROBLEM DESCRIPTION</th>
@@ -821,7 +848,16 @@ export function ResolutionTable({
                 <th className="py-2.5 px-3 w-28">TSP</th>
                 <th className="py-2.5 px-3 w-24">Status</th>
                 <th className="py-2.5 px-3 w-32">Raised By</th>
-                <th className="py-2.5 px-3 w-36">Resolved</th>
+                <th
+                  className="py-2.5 px-3 w-36 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 select-none"
+                  onClick={() => setSort(sort === "resolvedAt_desc" ? "resolvedAt_asc" : "resolvedAt_desc")}
+                  title="Click to sort by resolved date"
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Resolved</span>
+                    <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                  </div>
+                </th>
                 <th className="py-2.5 px-3 w-[30%]">Problem description / Activity Detail</th>
                 <th className="py-2.5 px-3 w-[30%]">Solution</th>
                 <th className="py-2.5 px-3 text-right w-16">Actions</th>
