@@ -59,25 +59,16 @@ export function ProjectDocumentsView({ project }: ProjectDocumentsViewProps) {
 
   const activeProjectMeta = PROJECTS.find((p) => p.code === project) || PROJECTS[0];
 
-  // Default suggested folders per project
-  const defaultFolders = useMemo(() => {
-    if (project === "ASR") {
-      return ["General", "Speech Models & Audio", "SOPs & Runbooks", "Architecture", "Acoustic Datasets"];
-    }
-    if (project === "CIAS") {
-      return ["General", "Firewall Topologies", "SOPs & Runbooks", "Architecture", "Security Policies"];
-    }
-    if (project === "CDR" || project === "IPDR") {
-      return ["General", "Mediation Schemas", "SOPs & Runbooks", "Architecture", "Packet Traces"];
-    }
-    return ["General", "SOPs & Runbooks", "Architecture", "Troubleshooting", "Release Notes"];
-  }, [project]);
-
+  // Only derive folders dynamically from documents and user-created custom folders
   const allAvailableFolders = useMemo(() => {
     const fromDocs = Array.from(new Set(documents.map((d) => d.folder || "General")));
-    const merged = Array.from(new Set([...defaultFolders, ...customFolders, ...fromDocs]));
-    return merged.filter(Boolean);
-  }, [defaultFolders, customFolders, documents]);
+    const merged = Array.from(new Set([...customFolders, ...fromDocs]));
+    const list = merged.filter(Boolean);
+    if (!list.includes("General") && list.length === 0) {
+      return ["General"];
+    }
+    return list;
+  }, [customFolders, documents]);
 
   const fetchDocs = async () => {
     setLoading(true);
@@ -103,7 +94,7 @@ export function ProjectDocumentsView({ project }: ProjectDocumentsViewProps) {
     setEditingDoc(null);
     setTitle("");
     setCategory("SOP");
-    setDocFolder(initialFolder && initialFolder !== "ALL" ? initialFolder : "General");
+    setDocFolder(initialFolder && initialFolder !== "ALL" ? initialFolder : allAvailableFolders[0] || "General");
     setContent("");
     setFileUrl("");
     setVersion("1.0.0");
@@ -136,6 +127,34 @@ export function ProjectDocumentsView({ project }: ProjectDocumentsViewProps) {
     }
     setNewFolderName("");
     setShowNewFolderInput(false);
+  };
+
+  const handleDeleteFolder = async (fName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const docCount = documents.filter((d) => (d.folder || "General") === fName).length;
+    const confirmMsg = docCount > 0
+      ? `Are you sure you want to delete folder "${fName}" and all ${docCount} file(s) inside it?`
+      : `Are you sure you want to delete folder "${fName}"?`;
+
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      const res = await fetch(`/api/documents?folder=${encodeURIComponent(fName)}&project=${project}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        toast.success(`Folder "${fName}" deleted.`);
+        setCustomFolders((prev) => prev.filter((f) => f !== fName));
+        if (selectedFolder === fName) {
+          setSelectedFolder("ALL");
+        }
+        fetchDocs();
+      } else {
+        toast.error("Failed to delete folder.");
+      }
+    } catch {
+      toast.error("Network error deleting folder.");
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -335,10 +354,10 @@ export function ProjectDocumentsView({ project }: ProjectDocumentsViewProps) {
               const count = documents.filter((d) => (d.folder || "General") === fName).length;
               const isSelected = selectedFolder === fName;
               return (
-                <button
+                <div
                   key={fName}
                   onClick={() => setSelectedFolder(fName)}
-                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition ${
+                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition group ${
                     isSelected
                       ? "bg-amber-500/15 text-amber-800 dark:text-amber-300 font-semibold border border-amber-500/30"
                       : "text-slate-700 dark:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-800"
@@ -352,8 +371,19 @@ export function ProjectDocumentsView({ project }: ProjectDocumentsViewProps) {
                     )}
                     <span className="truncate">{fName}</span>
                   </div>
-                  <span className="text-[10px] font-mono text-slate-400 ml-1">{count}</span>
-                </button>
+                  
+                  <div className="flex items-center space-x-1 shrink-0">
+                    <span className="text-[10px] font-mono text-slate-400">{count}</span>
+                    <button
+                      type="button"
+                      onClick={(e) => handleDeleteFolder(fName, e)}
+                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-rose-100 dark:hover:bg-rose-950/60 text-slate-400 hover:text-rose-600 rounded transition"
+                      title={`Delete folder "${fName}"`}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
               );
             })}
           </div>

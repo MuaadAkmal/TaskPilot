@@ -220,9 +220,26 @@ export async function DELETE(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
+    const folder = searchParams.get("folder");
+    const project = searchParams.get("project");
+
+    if (folder && project) {
+      // Delete all documents in this folder for the project
+      try {
+        await prisma.projectDocument.deleteMany({
+          where: { project, folder },
+        });
+      } catch (dbErr) {
+        console.warn("DB doc folder delete error:", dbErr);
+      }
+      docMemoryStore = docMemoryStore.filter(
+        (d) => !(d.project === project && (d.folder || "General") === folder)
+      );
+      return NextResponse.json({ success: true, folder, project });
+    }
 
     if (!id) {
-      return NextResponse.json({ error: "Document ID is required." }, { status: 400 });
+      return NextResponse.json({ error: "Document ID or (folder and project) is required." }, { status: 400 });
     }
 
     try {
