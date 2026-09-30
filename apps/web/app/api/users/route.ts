@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
-
-// Empty user mock fallback
-let mockUsers: any[] = [];
 
 export async function GET(req: Request) {
   try {
@@ -11,41 +9,19 @@ export async function GET(req: Request) {
     const rawProject = searchParams.get("project");
     const project = rawProject === "CMS_VAL_FS" ? "CMS" : rawProject;
 
-    try {
-      if (email) {
-        const user = await prisma.user.findUnique({
-          where: { email },
-        });
-        return NextResponse.json({ user: user || null });
-      }
-
-      const users = await prisma.user.findMany({
-        orderBy: { createdAt: "desc" },
-      });
-
-      if (project) {
-        const filtered = users.filter((u) => {
-          try {
-            const assigned = JSON.parse(u.projects || "[]");
-            return assigned.includes(project) || (project === "CMS" && assigned.includes("CMS_VAL_FS"));
-          } catch {
-            return false;
-          }
-        });
-        return NextResponse.json({ users: filtered });
-      }
-      return NextResponse.json({ users });
-    } catch (dbErr) {
-      console.warn("DB user query error, falling back to empty state:", dbErr);
-    }
-
     if (email) {
-      const found = mockUsers.find((u) => u.email === email);
-      return NextResponse.json({ user: found || null });
+      const user = await prisma.user.findUnique({
+        where: { email },
+      });
+      return NextResponse.json({ user: user || null });
     }
+
+    const users = await prisma.user.findMany({
+      orderBy: { createdAt: "desc" },
+    });
 
     if (project) {
-      const filtered = mockUsers.filter((u) => {
+      const filtered = users.filter((u) => {
         try {
           const assigned = JSON.parse(u.projects || "[]");
           return assigned.includes(project) || (project === "CMS" && assigned.includes("CMS_VAL_FS"));
@@ -56,7 +32,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ users: filtered });
     }
 
-    return NextResponse.json({ users: mockUsers });
+    return NextResponse.json({ users });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || "Failed to fetch users" }, { status: 500 });
   }
@@ -65,63 +41,80 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { email, name, title, role, receiveEmailAlerts, projects, alertOnProjects } = body;
+    const {
+      id,
+      email,
+      name,
+      employeeId,
+      pbx,
+      title,
+      role,
+      receiveEmailAlerts,
+      projects,
+      alertOnProjects,
+    } = body;
 
-    if (!email) {
-      return NextResponse.json({ error: "Email is required." }, { status: 400 });
+    if (!email && !id) {
+      return NextResponse.json({ error: "Email or ID is required." }, { status: 400 });
     }
 
     const projectsStr = Array.isArray(projects) ? JSON.stringify(projects) : projects || "[]";
     const alertProjectsStr = Array.isArray(alertOnProjects) ? JSON.stringify(alertOnProjects) : alertOnProjects || "ALL";
 
-    try {
-      const user = await prisma.user.upsert({
-        where: { email },
-        update: {
-          name: name || undefined,
-          title: title || undefined,
-          role: role || undefined,
-          receiveEmailAlerts: receiveEmailAlerts !== undefined ? Boolean(receiveEmailAlerts) : undefined,
-          projects: projectsStr,
-          alertOnProjects: alertProjectsStr,
-        },
-        create: {
-          clerkId: `usr_${Date.now()}`,
-          email,
-          name: name || "Anonymous Engineer",
-          title: title || "Operations Specialist",
-          role: role || (email.toLowerCase().includes("mdak") ? "ADMIN" : "ENGINEER"),
-          receiveEmailAlerts: receiveEmailAlerts !== undefined ? Boolean(receiveEmailAlerts) : false,
-          projects: projectsStr,
-          alertOnProjects: alertProjectsStr,
-        },
-      });
+    let targetEmail = email ? String(email).trim().toLowerCase() : "";
 
-      return NextResponse.json({ user });
-    } catch (dbErr) {
-      console.warn("DB upsert user error, updating mock fallback:", dbErr);
-      const existingIdx = mockUsers.findIndex((u) => u.email === email);
-      const updatedUser = {
-        id: existingIdx >= 0 ? mockUsers[existingIdx].id : `usr-${Date.now()}`,
-        clerkId: `clerk_${Date.now()}`,
-        email,
-        name: name || "Current Engineer",
-        title: title || "Operations Engineer",
-        projects: projectsStr,
-        role: role || "ENGINEER",
-        receiveEmailAlerts: receiveEmailAlerts !== undefined ? Boolean(receiveEmailAlerts) : true,
-        alertOnProjects: alertProjectsStr,
-      };
-
-      if (existingIdx >= 0) {
-        mockUsers[existingIdx] = updatedUser;
-      } else {
-        mockUsers.push(updatedUser);
-      }
-
-      return NextResponse.json({ user: updatedUser });
+    if (id && !targetEmail) {
+      const existing = await prisma.user.findUnique({ where: { id } });
+      if (existing) targetEmail = existing.email;
     }
+
+    const user = await prisma.user.upsert({
+      where: { email: targetEmail },
+      update: {
+        ...(name !== undefined && { name }),
+        ...(employeeId !== undefined && { employeeId }),
+        ...(pbx !== undefined && { pbx }),
+        ...(title !== undefined && { title }),
+        ...(role !== undefined && { role }),
+        ...(receiveEmailAlerts !== undefined && { receiveEmailAlerts: Boolean(receiveEmailAlerts) }),
+        ...(projects !== undefined && { projects: projectsStr }),
+        ...(alertOnProjects !== undefined && { alertOnProjects: alertProjectsStr }),
+      },
+      create: {
+        email: targetEmail,
+        name: name || "New Engineer",
+        employeeId: employeeId || null,
+        pbx: pbx || null,
+        title: title || "Operations Specialist",
+        role: role || (targetEmail.includes("mdak") ? "ADMIN" : "ENGINEER"),
+        receiveEmailAlerts: receiveEmailAlerts !== undefined ? Boolean(receiveEmailAlerts) : false,
+        projects: projectsStr,
+        alertOnProjects: alertProjectsStr,
+      },
+    });
+
+    return NextResponse.json({ user });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Failed to upsert user" }, { status: 500 });
+    console.error("User mutation error:", err);
+    return NextResponse.json({ error: err.message || "Failed to save user" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "User ID is required" }, { status: 400 });
+    }
+
+    await prisma.user.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Failed to delete user" }, { status: 500 });
   }
 }

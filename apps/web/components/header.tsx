@@ -196,6 +196,19 @@ export function Header({ currentProject }: HeaderProps) {
             <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
             <span>Agent Studio</span>
           </Link>
+          {userRole === "ADMIN" && (
+            <Link
+              href="/admin"
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition flex items-center space-x-1.5 ${
+                pathname === "/admin"
+                  ? "text-purple-700 dark:text-purple-300 bg-purple-100/70 dark:bg-purple-950/70 font-semibold border border-purple-200/60 dark:border-purple-800/60"
+                  : "text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40"
+              }`}
+            >
+              <Shield className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+              <span>Admin Panel</span>
+            </Link>
+          )}
         </nav>
 
         {/* Right Section: Notification Tick, Theme Toggle & Profile */}
