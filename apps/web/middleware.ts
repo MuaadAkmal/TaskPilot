@@ -8,6 +8,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/tasks(.*)",
   "/api/users(.*)",
   "/api/documents(.*)",
+  "/api/s3(.*)",
   "/api/agent(.*)",
   "/api/auth/sync(.*)",
 ]);

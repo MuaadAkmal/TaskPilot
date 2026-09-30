@@ -164,15 +164,42 @@ export function ProjectDocumentsView({ project }: ProjectDocumentsViewProps) {
 
     setIsSubmitting(true);
     try {
+      let finalFileUrl = fileUrl.trim() || null;
+      let finalFileSize = uploadedFile ? uploadedFile.size : undefined;
+      let finalFileType = uploadedFile ? uploadedFile.type : undefined;
+
+      // If user attached a file, upload to S3 endpoint first
+      if (uploadedFile) {
+        toast.info("Uploading file to S3 bucket...");
+        const s3FormData = new FormData();
+        s3FormData.append("file", uploadedFile);
+        s3FormData.append("project", project);
+        s3FormData.append("folder", docFolder);
+
+        const uploadRes = await fetch("/api/s3/upload", {
+          method: "POST",
+          body: s3FormData,
+        });
+
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json();
+          finalFileUrl = uploadData.fileUrl || uploadData.s3Uri || finalFileUrl;
+          finalFileSize = uploadData.fileSize || finalFileSize;
+          finalFileType = uploadData.fileType || finalFileType;
+        } else {
+          console.warn("S3 upload returned non-200, continuing with document record save.");
+        }
+      }
+
       const payload = {
         project,
         title: title.trim(),
         category,
         folder: docFolder.trim() || "General",
         content: content.trim(),
-        fileUrl: fileUrl.trim() || null,
-        fileSize: uploadedFile ? uploadedFile.size : undefined,
-        fileType: uploadedFile ? uploadedFile.type : undefined,
+        fileUrl: finalFileUrl,
+        fileSize: finalFileSize,
+        fileType: finalFileType,
         version: version.trim() || "1.0.0",
       };
 
