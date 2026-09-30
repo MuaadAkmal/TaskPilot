@@ -23,6 +23,8 @@ import {
   Database,
   Link as LinkIcon,
   Filter,
+  Download,
+  StickyNote,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -534,13 +536,17 @@ export function ProjectDocumentsView({ project }: ProjectDocumentsViewProps) {
                     </p>
                   </div>
 
-                  {doc.fileUrl && (
+                  {doc.fileUrl ? (
                     <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px]">
                       <a
-                        href={doc.fileUrl.startsWith("http") ? doc.fileUrl : undefined}
+                        href={
+                          doc.fileUrl.startsWith("http")
+                            ? doc.fileUrl
+                            : `/api/s3/download?fileUrl=${encodeURIComponent(doc.fileUrl)}`
+                        }
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center space-x-1.5 text-indigo-600 dark:text-indigo-400 hover:underline truncate max-w-[85%]"
+                        className="inline-flex items-center space-x-1.5 text-indigo-600 dark:text-indigo-400 hover:underline truncate max-w-[75%]"
                         title={doc.fileUrl}
                       >
                         {doc.fileUrl.startsWith("s3://") ? (
@@ -550,11 +556,30 @@ export function ProjectDocumentsView({ project }: ProjectDocumentsViewProps) {
                         )}
                         <span className="truncate font-mono">{doc.fileUrl}</span>
                       </a>
-                      {doc.fileSize && (
-                        <span className="text-[10px] text-slate-400 font-mono">
-                          {(doc.fileSize / 1024).toFixed(1)} KB
-                        </span>
-                      )}
+
+                      <div className="flex items-center space-x-2">
+                        {doc.fileSize && (
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            {(doc.fileSize / 1024).toFixed(1)} KB
+                          </span>
+                        )}
+                        <a
+                          href={`/api/s3/download?fileUrl=${encodeURIComponent(doc.fileUrl)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          download
+                          className="flex items-center space-x-1 px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-[10px] font-medium transition"
+                          title="Download file"
+                        >
+                          <Download className="w-3 h-3 text-slate-500" />
+                          <span>Download</span>
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center text-[10px] text-slate-400">
+                      <StickyNote className="w-3 h-3 mr-1 text-slate-400" />
+                      <span>Note / Documentation snippet</span>
                     </div>
                   )}
                 </div>
