@@ -1,78 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-let docMemoryStore: any[] = [
-  {
-    id: "doc-cms-1",
-    project: "CMS",
-    title: "Central Monitoring System Standard Operating Procedure",
-    category: "SOP",
-    content: "NOC escalation protocols and circuit alarm triage matrix across telecom circles.",
-    fileUrl: "https://wiki.internal/cms/sop-v1",
-    version: "1.2.0",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "doc-cdr-1",
-    project: "CDR",
-    title: "CDR Ingestion Stream Architecture & Mediation Rules",
-    category: "ARCHITECTURE",
-    content: "Parsing schemas, carrier file delivery timers, and mediation queue retention parameters.",
-    fileUrl: "https://wiki.internal/cdr/mediation-architecture",
-    version: "2.0.1",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "doc-ipdr-1",
-    project: "IPDR",
-    title: "IPDR Streaming & Packet Flow Verification Guide",
-    category: "TROUBLESHOOTING_GUIDE",
-    content: "Step-by-step diagnostic guide for IPDR collector packet loss and timestamp synchronization.",
-    fileUrl: "https://wiki.internal/ipdr/packet-diagnostics",
-    version: "1.1.0",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "doc-cias-1",
-    project: "CIAS",
-    title: "CIAS Core Network Topology & WAF Architecture",
-    category: "ARCHITECTURE",
-    content: "Detailed diagram and IP routing matrix for CIAS firewall perimeter and IPS gateways.",
-    fileUrl: "https://docs.internal/cias/network-topology-v2.pdf",
-    version: "2.1.0",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "doc-mcx-1",
-    project: "MCX",
-    title: "MCX Floor Control Server & PTT Gateway Configuration",
-    category: "SOP",
-    content: "Mission Critical Push-to-Talk server parameters and multicast cluster redundancy guide.",
-    fileUrl: "https://wiki.internal/mcx/ptt-gateway",
-    version: "1.0.0",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "doc-tsoc-1",
-    project: "TSOC",
-    title: "TSOC SS7 & Diameter Threat Response Playbook",
-    category: "TROUBLESHOOTING_GUIDE",
-    content: "Immediate containment and perimeter ACL rule injection runbook for signaling attack alerts.",
-    fileUrl: "https://wiki.internal/tsoc/signaling-playbook",
-    version: "3.2.0",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "doc-asr-1",
-    project: "ASR",
-    title: "Automatic Speech Recognition Pipeline Failover Runbook",
-    category: "TROUBLESHOOTING_GUIDE",
-    content: "Runbook for GPU node recovery and realtime speech acoustic model inference failover.",
-    fileUrl: "https://wiki.internal/asr/runbooks/failover",
-    version: "1.0.2",
-    createdAt: new Date().toISOString(),
-  },
-];
+let docMemoryStore: any[] = [];
 
 export async function GET(req: Request) {
   try {
@@ -94,9 +23,7 @@ export async function GET(req: Request) {
         orderBy: { createdAt: "desc" },
       });
 
-      if (documents.length > 0) {
-        return NextResponse.json({ documents });
-      }
+      return NextResponse.json({ documents });
     } catch (dbErr) {
       console.warn("DB doc query error, falling back to memory:", dbErr);
     }
