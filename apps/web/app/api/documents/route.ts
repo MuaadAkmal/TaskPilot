@@ -150,6 +150,49 @@ export async function POST(req: Request) {
   }
 }
 
+export async function PUT(req: Request) {
+  try {
+    const body = await req.json();
+    const { id, title, category, content, fileUrl, version } = body;
+
+    if (!id || !title || !content) {
+      return NextResponse.json({ error: "Document ID, title, and content are required." }, { status: 400 });
+    }
+
+    try {
+      const updated = await prisma.projectDocument.update({
+        where: { id },
+        data: {
+          title,
+          category: category || "SOP",
+          content,
+          fileUrl: fileUrl || null,
+          version: version || "1.0.0",
+        },
+      });
+      return NextResponse.json({ document: updated });
+    } catch (dbErr) {
+      console.warn("DB doc update error, updating in memory fallback:", dbErr);
+      const idx = docMemoryStore.findIndex((d) => d.id === id);
+      if (idx !== -1) {
+        docMemoryStore[idx] = {
+          ...docMemoryStore[idx],
+          title,
+          category: category || "SOP",
+          content,
+          fileUrl: fileUrl || null,
+          version: version || "1.0.0",
+          updatedAt: new Date().toISOString(),
+        };
+        return NextResponse.json({ document: docMemoryStore[idx] });
+      }
+      return NextResponse.json({ error: "Document not found." }, { status: 404 });
+    }
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Failed to update document" }, { status: 500 });
+  }
+}
+
 export async function DELETE(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
