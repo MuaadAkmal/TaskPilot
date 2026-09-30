@@ -431,7 +431,7 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
               </>
             ) : isAsr ? (
               <>
-                {/* ASR Layout: Date & Time, Speech Pipeline / Component, Status, Request Raised By */}
+                {/* ASR Layout: Date & Time, Subject, Status (Logged By removed) */}
                 <div>
                   <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
                     Date & Time
@@ -446,19 +446,22 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
 
                 <div>
                   <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
-                    Speech Component / Pipeline
+                    Subject *
                   </label>
-                  <select
+                  <input
+                    type="text"
                     value={tspVal}
                     onChange={(e) => setTspVal(e.target.value)}
+                    placeholder="e.g. Model Calibration / Dataset Ingestion"
+                    list="asr-subject-options"
                     className="w-full text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition font-medium"
-                  >
+                    required
+                  />
+                  <datalist id="asr-subject-options">
                     {activeProjectMeta.fields.primaryOptions.map((opt) => (
-                      <option key={opt} value={opt}>
-                        {opt}
-                      </option>
+                      <option key={opt} value={opt} />
                     ))}
-                  </select>
+                  </datalist>
                 </div>
 
                 <div>
@@ -473,23 +476,6 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
                     {STATUS_OPTIONS.map((s) => (
                       <option key={s.value} value={s.value}>
                         {s.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
-                    Logged By / Raised By
-                  </label>
-                  <select
-                    value={raisedByName}
-                    onChange={(e) => setRaisedByName(e.target.value)}
-                    className="w-full text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition font-medium"
-                  >
-                    {raisedByList.map((lea) => (
-                      <option key={lea} value={lea}>
-                        {lea}
                       </option>
                     ))}
                   </select>

@@ -116,11 +116,10 @@ export function ResolutionTable({
       return [
         { id: "id", label: "Task ID", getValue: (t) => t.id },
         { id: "date", label: "DATE", getValue: (t) => formatDateDDMMYYYY(t.resolvedAt || t.createdAt) },
+        { id: "tsp", label: "SUBJECT", getValue: (t) => t.tsp },
         { id: "problemDescription", label: "TASK DONE", getValue: (t) => t.problemDescription },
         { id: "solution", label: "INFERENCE", getValue: (t) => t.solution },
         { id: "status", label: "STATUS", getValue: (t) => t.status },
-        { id: "tsp", label: "COMPONENT", getValue: (t) => t.tsp },
-        { id: "raisedByName", label: "LOGGED BY", getValue: (t) => t.raisedByName },
         { id: "remarks", label: "REMARKS", getValue: (t) => t.remarks || "" },
       ];
     }
@@ -752,7 +751,7 @@ export function ResolutionTable({
         <table className="w-full text-left text-xs table-fixed">
           <thead>
             {isAsr ? (
-              /* ASR Columns: DATE, TASK DONE, INFERENCE, STATUS, LOGGED BY */
+              /* ASR Columns: DATE, SUBJECT, TASK DONE, INFERENCE, STATUS */
               <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 text-[11px] font-medium text-slate-400 dark:text-slate-400 uppercase tracking-wider">
                 <th className="py-2.5 px-3 w-8" onClick={(e) => e.stopPropagation()}>
                   <button onClick={toggleSelectAllRows} className="flex items-center justify-center">
@@ -765,7 +764,7 @@ export function ResolutionTable({
                 </th>
                 <th className="py-2.5 px-3.5 w-12">#</th>
                 <th
-                  className="py-2.5 px-3 w-36 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 select-none"
+                  className="py-2.5 px-3 w-32 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 select-none"
                   onClick={() => setSort(sort === "resolvedAt_desc" ? "resolvedAt_asc" : "resolvedAt_desc")}
                   title="Click to sort by date"
                 >
@@ -774,10 +773,10 @@ export function ResolutionTable({
                     <ArrowUpDown className="w-3 h-3 text-slate-400" />
                   </div>
                 </th>
-                <th className="py-2.5 px-3 w-[36%]">TASK DONE</th>
-                <th className="py-2.5 px-3 w-[36%]">INFERENCE</th>
+                <th className="py-2.5 px-3 w-44">SUBJECT</th>
+                <th className="py-2.5 px-3 w-[32%]">TASK DONE</th>
+                <th className="py-2.5 px-3 w-[32%]">INFERENCE</th>
                 <th className="py-2.5 px-3 w-24">STATUS</th>
-                <th className="py-2.5 px-3 w-28">LOGGED BY</th>
                 <th className="py-2.5 px-3 text-right w-16">Actions</th>
               </tr>
             ) : isCdrOrIpdr ? (
@@ -947,6 +946,9 @@ export function ResolutionTable({
                       <td className="py-2.5 px-3 text-slate-600 dark:text-slate-400 font-mono text-[11px] whitespace-nowrap">
                         {formatDateSept25th(task.resolvedAt || task.createdAt)}
                       </td>
+                      <td className="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-200 truncate">
+                        {task.tsp || "General"}
+                      </td>
                       <td className="py-2.5 px-3 text-slate-800 dark:text-slate-200 truncate font-medium">
                         {task.problemDescription}
                       </td>
@@ -954,9 +956,6 @@ export function ResolutionTable({
                         {task.solution}
                       </td>
                       <td className="py-2.5 px-3">{getStatusBadge(task.status)}</td>
-                      <td className="py-2.5 px-3 font-medium text-slate-700 dark:text-slate-300 truncate">
-                        {task.raisedByName}
-                      </td>
                     </>
                   ) : isCdrOrIpdr ? (
                     <>

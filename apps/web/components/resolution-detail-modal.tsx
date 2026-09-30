@@ -33,24 +33,45 @@ export function ResolutionDetailModal({ task, sequenceNum, onClose }: Resolution
         <div className="p-6 overflow-y-auto space-y-4 text-xs text-slate-700">
           {/* Metadata Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-            <div>
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">TSP Provider</span>
-              <span className="font-bold text-slate-800 text-xs">{task.tsp}</span>
-            </div>
-            <div>
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">LSA Circle</span>
-              <span className="font-bold text-slate-800 text-xs">{task.lsa}</span>
-            </div>
-            <div>
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">Downtime</span>
-              <span className="font-bold text-indigo-700 text-xs">{formatDowntime(task.downtimeMinutes)}</span>
-            </div>
-            <div>
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">Status</span>
-              <span className="inline-block mt-0.5 px-2 py-0.2 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                {task.status}
-              </span>
-            </div>
+            {task.project === "ASR" ? (
+              <>
+                <div className="col-span-2">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Subject</span>
+                  <span className="font-bold text-slate-800 text-xs">{task.tsp || "General"}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Project</span>
+                  <span className="font-bold text-emerald-700 text-xs">ASR</span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Status</span>
+                  <span className="inline-block mt-0.5 px-2 py-0.2 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                    {task.status}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">TSP Provider</span>
+                  <span className="font-bold text-slate-800 text-xs">{task.tsp}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">LSA Circle</span>
+                  <span className="font-bold text-slate-800 text-xs">{task.lsa}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Downtime</span>
+                  <span className="font-bold text-indigo-700 text-xs">{formatDowntime(task.downtimeMinutes)}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Status</span>
+                  <span className="inline-block mt-0.5 px-2 py-0.2 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                    {task.status}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Problem */}
@@ -88,7 +109,9 @@ export function ResolutionDetailModal({ task, sequenceNum, onClose }: Resolution
 
           {/* Footer attribution */}
           <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
-            <div>Reported by: <strong className="text-slate-600 dark:text-slate-300">{task.raisedByName}</strong></div>
+            {task.project !== "ASR" && (
+              <div>Reported by: <strong className="text-slate-600 dark:text-slate-300">{task.raisedByName}</strong></div>
+            )}
             {task.createdByEmail && (
               <div>Recorded by: <strong className="text-slate-600 dark:text-slate-300">{task.createdByName ? `${task.createdByName} (${task.createdByEmail})` : task.createdByEmail}</strong></div>
             )}

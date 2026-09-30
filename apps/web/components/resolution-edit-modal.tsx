@@ -147,37 +147,57 @@ export function ResolutionEditModal({ task, sequenceNum, onClose, onSaved }: Res
               <>
                 <div>
                   <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
-                    {activeProjectMeta.fields.primaryFieldLabel}
+                    {task.project === "ASR" ? "Subject" : activeProjectMeta.fields.primaryFieldLabel}
                   </label>
-                  <select
-                    value={tsp}
-                    onChange={(e) => setTsp(e.target.value)}
-                    className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
-                  >
-                    {activeProjectMeta.fields.primaryOptions.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
+                  {task.project === "ASR" ? (
+                    <>
+                      <input
+                        type="text"
+                        value={tsp}
+                        onChange={(e) => setTsp(e.target.value)}
+                        placeholder="Subject..."
+                        list="edit-asr-subject-options"
+                        className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition font-medium"
+                      />
+                      <datalist id="edit-asr-subject-options">
+                        {activeProjectMeta.fields.primaryOptions.map((opt) => (
+                          <option key={opt} value={opt} />
+                        ))}
+                      </datalist>
+                    </>
+                  ) : (
+                    <select
+                      value={tsp}
+                      onChange={(e) => setTsp(e.target.value)}
+                      className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
+                    >
+                      {activeProjectMeta.fields.primaryOptions.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
 
-                <div>
-                  <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
-                    {activeProjectMeta.fields.secondaryFieldLabel}
-                  </label>
-                  <select
-                    value={lsa}
-                    onChange={(e) => setLsa(e.target.value)}
-                    className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
-                  >
-                    {activeProjectMeta.fields.secondaryOptions.map((l) => (
-                      <option key={l} value={l}>
-                        {l}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {task.project !== "ASR" && (
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                      {activeProjectMeta.fields.secondaryFieldLabel}
+                    </label>
+                    <select
+                      value={lsa}
+                      onChange={(e) => setLsa(e.target.value)}
+                      className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
+                    >
+                      {activeProjectMeta.fields.secondaryOptions.map((l) => (
+                        <option key={l} value={l}>
+                          {l}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </>
             )}
 
@@ -198,22 +218,24 @@ export function ResolutionEditModal({ task, sequenceNum, onClose, onSaved }: Res
               </select>
             </div>
 
-            <div>
-              <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
-                Request Raised By
-              </label>
-              <select
-                value={raisedByName}
-                onChange={(e) => setRaisedByName(e.target.value)}
-                className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition font-medium"
-              >
-                {raisedByList.map((lea) => (
-                  <option key={lea} value={lea}>
-                    {lea}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {task.project !== "ASR" && (
+              <div>
+                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                  Request Raised By
+                </label>
+                <select
+                  value={raisedByName}
+                  onChange={(e) => setRaisedByName(e.target.value)}
+                  className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition font-medium"
+                >
+                  {raisedByList.map((lea) => (
+                    <option key={lea} value={lea}>
+                      {lea}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           <div>

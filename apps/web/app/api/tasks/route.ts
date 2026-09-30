@@ -203,8 +203,8 @@ export async function POST(req: Request) {
       resolvedAt,
     } = body;
 
-    const finalTsp = tsp || (project === "TSOC" || project === "MCX" ? "-" : "");
-    const finalLsa = lsa || (project === "TSOC" || project === "MCX" || project === "CIAS" ? "-" : "");
+    const finalTsp = tsp || (project === "TSOC" || project === "MCX" ? "-" : project === "ASR" ? "General" : "");
+    const finalLsa = lsa || (project === "TSOC" || project === "MCX" || project === "CIAS" || project === "ASR" ? "-" : "");
 
     if (!finalTsp || !finalLsa || !problemDescription || !solution) {
       return NextResponse.json(
