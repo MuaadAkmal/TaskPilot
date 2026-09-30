@@ -7,6 +7,7 @@ const isPublicRoute = createRouteMatcher([
   "/unauthorized(.*)",
   "/api/tasks(.*)",
   "/api/users(.*)",
+  "/api/documents(.*)",
   "/api/agent(.*)",
   "/api/auth/sync(.*)",
 ]);

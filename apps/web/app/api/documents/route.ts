@@ -149,3 +149,27 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: err.message || "Failed to create document" }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "Document ID is required." }, { status: 400 });
+    }
+
+    try {
+      await prisma.projectDocument.delete({
+        where: { id },
+      });
+    } catch (dbErr) {
+      console.warn("DB doc delete error, removing from memory store:", dbErr);
+    }
+
+    docMemoryStore = docMemoryStore.filter((d) => d.id !== id);
+    return NextResponse.json({ success: true, id });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Failed to delete document" }, { status: 500 });
+  }
+}

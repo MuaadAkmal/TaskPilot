@@ -10,6 +10,8 @@ import {
   FolderGit2,
   CheckCircle2,
   Sparkles,
+  Trash2,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -134,7 +136,29 @@ export function ProjectDocumentsView({ project }: ProjectDocumentsViewProps) {
                   <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-slate-200/60 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                     {doc.category}
                   </span>
-                  <span className="text-[10px] font-mono text-slate-400">v{doc.version || "1.0.0"}</span>
+                  <div className="flex items-center space-x-1.5">
+                    <span className="text-[10px] font-mono text-slate-400">v{doc.version || "1.0.0"}</span>
+                    <button
+                      onClick={async () => {
+                        if (!confirm(`Delete document "${doc.title}"?`)) return;
+                        try {
+                          const res = await fetch(`/api/documents?id=${doc.id}`, { method: "DELETE" });
+                          if (res.ok) {
+                            toast.success("Document removed.");
+                            fetchDocs();
+                          } else {
+                            toast.error("Failed to delete document.");
+                          }
+                        } catch {
+                          toast.error("Network error deleting document.");
+                        }
+                      }}
+                      className="text-slate-400 hover:text-rose-500 p-0.5 rounded hover:bg-rose-50 dark:hover:bg-slate-800 transition"
+                      title="Delete Document"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
                 </div>
 
                 <h3 className="text-xs font-semibold text-slate-900 dark:text-slate-100 mt-1">
