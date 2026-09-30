@@ -227,6 +227,60 @@ export function ResolutionTable({
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedRowIds.length === 0) return;
+    if (!confirm(`Are you sure you want to permanently delete ${selectedRowIds.length} incident record(s)?`)) {
+      return;
+    }
+
+    setIsBulkUpdating(true);
+    try {
+      const res = await fetch("/api/tasks/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "delete",
+          ids: selectedRowIds,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(`Deleted ${data.count} incident record(s)!`);
+        setSelectedRowIds([]);
+        onRefresh();
+      } else {
+        toast.error(data.error || "Failed to delete selected records.");
+      }
+    } catch (err) {
+      toast.error("Network error deleting records.");
+    } finally {
+      setIsBulkUpdating(false);
+    }
+  };
+
+  const handleDeleteSingleTask = async (task: MockTask, sequenceNum: number) => {
+    if (!confirm(`Are you sure you want to delete incident #${sequenceNum}?`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/tasks?id=${task.id}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        toast.success(`Deleted incident #${sequenceNum}`);
+        onRefresh();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to delete record.");
+      }
+    } catch (err) {
+      toast.error("Network error deleting record.");
+    }
+  };
+
   const filterByDateRange = (list: MockTask[]) => {
     if (!startDate && !endDate) return list;
     return list.filter((t) => {
@@ -667,6 +721,15 @@ export function ResolutionTable({
             >
               <span>Mark Pending</span>
             </button>
+
+            <button
+              onClick={handleBulkDelete}
+              disabled={isBulkUpdating}
+              className="px-2.5 py-1 text-xs font-medium bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition flex items-center space-x-1 shadow-xs disabled:opacity-50 ml-1"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Delete Selected</span>
+            </button>
           </div>
         </div>
       )}
@@ -903,6 +966,13 @@ export function ResolutionTable({
                         title="Edit Resolution"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteSingleTask(task, sequenceNum)}
+                        className="p-1 rounded text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-slate-800 transition"
+                        title="Delete Record"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </td>

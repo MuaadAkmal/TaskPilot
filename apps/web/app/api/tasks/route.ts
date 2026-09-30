@@ -325,3 +325,31 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: error.message || "Failed to update task" }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "Task ID is required" }, { status: 400 });
+    }
+
+    const numericId = parseInt(id, 10);
+    if (!isNaN(numericId)) {
+      try {
+        await prisma.taskResolution.delete({
+          where: { id: numericId },
+        });
+      } catch (dbErr: any) {
+        console.warn("DB delete failed, falling back to memory store:", dbErr.message);
+      }
+    }
+
+    taskStore.delete(id);
+    return NextResponse.json({ success: true, id }, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || "Failed to delete task" }, { status: 500 });
+  }
+}
+

@@ -43,7 +43,32 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, count: ids.length, status }, { status: 200 });
     }
 
-    // 2. Bulk Import Tasks (from CSV)
+    // 2. Bulk Delete
+    if (action === "delete") {
+      if (!ids || !Array.isArray(ids) || ids.length === 0) {
+        return NextResponse.json({ error: "Missing ids for deletion." }, { status: 400 });
+      }
+
+      const numericIds = ids.map((id) => parseInt(id, 10)).filter((id) => !isNaN(id));
+
+      try {
+        if (numericIds.length > 0) {
+          await prisma.taskResolution.deleteMany({
+            where: { id: { in: numericIds } },
+          });
+        }
+      } catch (dbErr) {
+        console.warn("DB bulk delete error, falling back to store:", dbErr);
+      }
+
+      ids.forEach((id) => {
+        taskStore.delete(id);
+      });
+
+      return NextResponse.json({ success: true, count: ids.length }, { status: 200 });
+    }
+
+    // 3. Bulk Import Tasks (from CSV)
     if (action === "importTasks") {
       if (!tasks || !Array.isArray(tasks) || tasks.length === 0) {
         return NextResponse.json({ error: "No tasks provided for import." }, { status: 400 });

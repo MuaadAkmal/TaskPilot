@@ -255,22 +255,53 @@ export function ResolutionEditModal({ task, sequenceNum, onClose, onSaved }: Res
           </div>
 
           {/* Footer Actions */}
-          <div className="pt-2 flex items-center justify-end space-x-2 border-t border-slate-100 dark:border-slate-800">
+          <div className="pt-2 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
-              onClick={onClose}
-              className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+              onClick={async () => {
+                if (!confirm(`Are you sure you want to permanently delete incident #${displayNum}?`)) {
+                  return;
+                }
+                setIsSaving(true);
+                try {
+                  const res = await fetch(`/api/tasks?id=${task.id}`, { method: "DELETE" });
+                  if (res.ok) {
+                    toast.success(`Deleted incident #${displayNum}`);
+                    onSaved();
+                    onClose();
+                  } else {
+                    const data = await res.json();
+                    toast.error(data.error || "Failed to delete record.");
+                  }
+                } catch {
+                  toast.error("Network error deleting record.");
+                } finally {
+                  setIsSaving(false);
+                }
+              }}
+              className="text-xs text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 px-3 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition flex items-center space-x-1"
             >
-              Cancel
+              <X className="w-3.5 h-3.5" />
+              <span>Delete Record</span>
             </button>
-            <button
-              type="submit"
-              disabled={isSaving}
-              className="bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 font-medium text-xs px-4 py-1.5 rounded-lg shadow-sm transition flex items-center space-x-1.5"
-            >
-              <Save className="w-3.5 h-3.5" />
-              <span>{isSaving ? "Saving..." : "Save Changes"}</span>
-            </button>
+
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 font-medium text-xs px-4 py-1.5 rounded-lg shadow-sm transition flex items-center space-x-1.5"
+              >
+                <Save className="w-3.5 h-3.5" />
+                <span>{isSaving ? "Saving..." : "Save Changes"}</span>
+              </button>
+            </div>
           </div>
         </form>
       </div>
