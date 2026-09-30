@@ -87,8 +87,11 @@ export function ResolutionDetailModal({ task, sequenceNum, onClose }: Resolution
           )}
 
           {/* Footer attribution */}
-          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-400">
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
             <div>Reported by: <strong className="text-slate-600 dark:text-slate-300">{task.raisedByName}</strong></div>
+            {task.createdByEmail && (
+              <div>Recorded by: <strong className="text-slate-600 dark:text-slate-300">{task.createdByName ? `${task.createdByName} (${task.createdByEmail})` : task.createdByEmail}</strong></div>
+            )}
             <div>Timestamp: <strong className="text-slate-600 dark:text-slate-300">{formatDateTimeDDMMYYYY(task.resolvedAt || task.createdAt)}</strong></div>
           </div>
         </div>

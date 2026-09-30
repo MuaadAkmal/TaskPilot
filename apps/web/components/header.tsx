@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams, usePathname } from "next/navigation";
+import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { ProjectCode, PROJECTS } from "@/lib/project-config";
 import { ThemeToggle } from "./theme-toggle";
 import {
@@ -21,6 +21,7 @@ import {
   BarChart3,
   Layers,
   LogIn,
+  Shield,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -30,38 +31,44 @@ interface HeaderProps {
 
 export function Header({ currentProject }: HeaderProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user: clerkUser, isLoaded: clerkLoaded } = useUser();
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [emailAlertsOptIn, setEmailAlertsOptIn] = useState<boolean>(true);
+  const [emailAlertsOptIn, setEmailAlertsOptIn] = useState<boolean>(false);
   const [userEmail, setUserEmail] = useState<string>("engineer@taskpilot.io");
   const [userTitle, setUserTitle] = useState<string>("Senior Operations Engineer");
+  const [userRole, setUserRole] = useState<string>("ENGINEER");
 
   const activeProject = PROJECTS.find((p) => p.code === currentProject) || PROJECTS[0];
 
   useEffect(() => {
-    if (clerkUser) {
+    async function syncAndValidate() {
+      if (!clerkLoaded || !clerkUser) return;
+
       const primaryEmail = clerkUser.primaryEmailAddress?.emailAddress;
       if (primaryEmail) setUserEmail(primaryEmail);
-      if (clerkUser.fullName) setUserTitle(clerkUser.fullName);
-    }
-  }, [clerkUser]);
 
-  useEffect(() => {
-    async function loadUser() {
       try {
-        const res = await fetch(`/api/users?email=${userEmail}`);
+        const res = await fetch("/api/auth/sync");
+        if (res.status === 403) {
+          router.push("/unauthorized");
+          return;
+        }
+
         const data = await res.json();
-        if (data.user) {
-          setEmailAlertsOptIn(data.user.receiveEmailAlerts);
+        if (data.allowed && data.user) {
+          setEmailAlertsOptIn(Boolean(data.user.receiveEmailAlerts));
           if (data.user.title) setUserTitle(data.user.title);
+          if (data.user.role) setUserRole(data.user.role);
         }
       } catch (err) {
-        // Fallback
+        // Non-blocking fallback
       }
     }
-    loadUser();
-  }, [userEmail]);
+
+    syncAndValidate();
+  }, [clerkLoaded, clerkUser, router]);
 
   const toggleEmailOptIn = async () => {
     const nextVal = !emailAlertsOptIn;
@@ -234,7 +241,17 @@ export function Header({ currentProject }: HeaderProps) {
 
           {/* Authentication & Profile */}
           <SignedIn>
-            <div className="flex items-center space-x-2 pl-1 border-l border-slate-200 dark:border-slate-800">
+            <div className="flex items-center space-x-2 pl-2 border-l border-slate-200 dark:border-slate-800">
+              {userRole === "ADMIN" ? (
+                <span className="hidden sm:inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-950/80 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 font-bold text-[10px]">
+                  <Shield className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+                  <span>Admin</span>
+                </span>
+              ) : (
+                <span className="hidden sm:inline-block px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold text-[10px]">
+                  Engineer
+                </span>
+              )}
               <UserButton
                 afterSignOutUrl="/sign-in"
                 appearance={{

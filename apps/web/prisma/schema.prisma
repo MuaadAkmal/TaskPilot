@@ -17,7 +17,7 @@ model User {
   title               String?  // e.g. "Senior NOC Engineer", "L2 Tech Lead", "Field Operations Lead"
   projects            String   @default("[\"CMS_VAL_FS\",\"ASR\",\"CIAS\",\"TSOC\",\"CDR\",\"IPDR\",\"MCX\"]") // JSON array of assigned project codes
   role                String   @default("ENGINEER") // ADMIN, TEAM_LEAD, ENGINEER
-  receiveEmailAlerts  Boolean  @default(true) // Tick mark: If false, user is opted out from team broadcast emails
+  receiveEmailAlerts  Boolean  @default(false) // Tick mark: Defaults to false (disabled by default)
   alertOnProjects     String   @default("ALL") // "ALL" or specific JSON array of project codes
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt

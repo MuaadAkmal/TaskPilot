@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useUser } from "@clerk/nextjs";
 import {
   ProjectCode,
   PROJECTS,
@@ -18,6 +19,7 @@ interface ResolutionFormProps {
 }
 
 export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps) {
+  const { user: clerkUser } = useUser();
   const activeProjectMeta = PROJECTS.find((p) => p.code === project) || PROJECTS[0];
   const raisedByList = activeProjectMeta.fields.raisedByOptions || [];
 
@@ -103,8 +105,10 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
 
     setIsSubmitting(true);
     try {
-      const storedEmail = typeof window !== "undefined" ? localStorage.getItem("user_email") || "engineer@taskpilot.io" : "engineer@taskpilot.io";
-      const storedName = typeof window !== "undefined" ? localStorage.getItem("user_name") || storedEmail.split("@")[0] : "Lead Operator";
+      const primaryEmail = clerkUser?.primaryEmailAddress?.emailAddress;
+      const primaryName = clerkUser?.fullName || clerkUser?.firstName;
+      const storedEmail = primaryEmail || (typeof window !== "undefined" ? localStorage.getItem("user_email") || "engineer@taskpilot.io" : "engineer@taskpilot.io");
+      const storedName = primaryName || (typeof window !== "undefined" ? localStorage.getItem("user_name") || storedEmail.split("@")[0] : "Lead Operator");
 
       const res = await fetch("/api/tasks", {
         method: "POST",

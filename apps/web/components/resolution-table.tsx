@@ -161,6 +161,7 @@ export function ResolutionTable({
       { id: "problemDescription", label: "Problem description / Activity Detail", getValue: (t) => t.problemDescription },
       { id: "solution", label: "Solution", getValue: (t) => t.solution },
       { id: "remarks", label: "Remarks", getValue: (t) => t.remarks || "" },
+      { id: "createdBy", label: "Recorded By", getValue: (t) => t.createdByEmail || t.createdByName || "N/A" },
     ];
   }, [currentProject, isCdrOrIpdr, isCias, isTsoc, isMcx, activeProjectMeta]);
 
