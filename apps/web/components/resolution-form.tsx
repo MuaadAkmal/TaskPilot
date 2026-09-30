@@ -40,6 +40,7 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
   const isMcx = project === "MCX";
   const isCias = project === "CIAS";
   const isCdrOrIpdr = project === "CDR" || project === "IPDR";
+  const isAsr = project === "ASR";
 
   // When project or activeProjectMeta changes, initialize LSA & TSP
   useEffect(() => {
@@ -428,6 +429,72 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
                   />
                 </div>
               </>
+            ) : isAsr ? (
+              <>
+                {/* ASR Layout: Date & Time, Speech Pipeline / Component, Status, Request Raised By */}
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+                    Date & Time
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={resolvedAt}
+                    onChange={(e) => setResolvedAt(e.target.value)}
+                    className="w-full text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+                    Speech Component / Pipeline
+                  </label>
+                  <select
+                    value={tspVal}
+                    onChange={(e) => setTspVal(e.target.value)}
+                    className="w-full text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition font-medium"
+                  >
+                    {activeProjectMeta.fields.primaryOptions.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+                    Status
+                  </label>
+                  <select
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                    className="w-full text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
+                  >
+                    {STATUS_OPTIONS.map((s) => (
+                      <option key={s.value} value={s.value}>
+                        {s.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+                    Logged By / Raised By
+                  </label>
+                  <select
+                    value={raisedByName}
+                    onChange={(e) => setRaisedByName(e.target.value)}
+                    className="w-full text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition font-medium"
+                  >
+                    {raisedByList.map((lea) => (
+                      <option key={lea} value={lea}>
+                        {lea}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
             ) : (
               <>
                 {/* TSOC / MCX Layout: Date & Time, Status, Request Raised By */}
@@ -484,7 +551,9 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                {isCias
+                {isAsr
+                  ? "Task Done *"
+                  : isCias
                   ? "Problem"
                   : isTsoc || isMcx || isCdrOrIpdr
                   ? "Problem Description"
@@ -494,7 +563,11 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
                 rows={2}
                 value={problemDescription}
                 onChange={(e) => setProblemDescription(e.target.value)}
-                placeholder="Observed alarms, incident details, or symptoms..."
+                placeholder={
+                  isAsr
+                    ? "Speech processing task, model tuning, acoustic calibration, or maintenance done..."
+                    : "Observed alarms, incident details, or symptoms..."
+                }
                 className="w-full text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition"
                 required
               />
@@ -502,13 +575,17 @@ export function ResolutionForm({ project, onRecordCreated }: ResolutionFormProps
 
             <div>
               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                Solution
+                {isAsr ? "Inference *" : "Solution"}
               </label>
               <textarea
                 rows={2}
                 value={solution}
                 onChange={(e) => setSolution(e.target.value)}
-                placeholder="Exact commands executed or fix implemented..."
+                placeholder={
+                  isAsr
+                    ? "Inference latency, WER (Word Error Rate), model output observations, or conclusion..."
+                    : "Exact commands executed or fix implemented..."
+                }
                 className="w-full text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-slate-400 transition font-mono"
                 required
               />

@@ -78,13 +78,19 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const rawProject = searchParams.get("project") || "CMS";
+    const folder = searchParams.get("folder");
     const project = rawProject === "CMS_VAL_FS" ? "CMS" : rawProject;
 
     try {
+      const whereClause: any = {
+        project: { in: project === "CMS" ? ["CMS", "CMS_VAL_FS"] : [project] },
+      };
+      if (folder && folder !== "ALL") {
+        whereClause.folder = folder;
+      }
+
       const documents = await prisma.projectDocument.findMany({
-        where: {
-          project: { in: project === "CMS" ? ["CMS", "CMS_VAL_FS"] : [project] },
-        },
+        where: whereClause,
         orderBy: { createdAt: "desc" },
       });
 
@@ -96,8 +102,10 @@ export async function GET(req: Request) {
     }
 
     const filtered = docMemoryStore.filter((d) => {
-      if (project === "CMS") return d.project === "CMS" || d.project === "CMS_VAL_FS";
-      return d.project === project;
+      const matchProject = project === "CMS" ? d.project === "CMS" || d.project === "CMS_VAL_FS" : d.project === project;
+      if (!matchProject) return false;
+      if (folder && folder !== "ALL") return d.folder === folder;
+      return true;
     });
 
     return NextResponse.json({ documents: filtered });
@@ -109,21 +117,25 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { project, title, category, content, fileUrl, version } = body;
+    const { project, title, category, folder, content, fileUrl, fileSize, fileType, version } = body;
 
     if (!project || !title || !content) {
       return NextResponse.json({ error: "Project, title, and description/content are required." }, { status: 400 });
     }
 
     const targetProject = project === "CMS_VAL_FS" ? "CMS" : project;
+    const assignedFolder = folder?.trim() || "General";
 
     const newDoc = {
       id: `doc-${Date.now()}`,
       project: targetProject,
       title,
       category: category || "SOP",
+      folder: assignedFolder,
       content,
       fileUrl: fileUrl || null,
+      fileSize: fileSize || null,
+      fileType: fileType || null,
       version: version || "1.0.0",
       createdAt: new Date().toISOString(),
     };
@@ -134,8 +146,11 @@ export async function POST(req: Request) {
           project: targetProject,
           title,
           category: category || "SOP",
+          folder: assignedFolder,
           content,
           fileUrl: fileUrl || null,
+          fileSize: fileSize || null,
+          fileType: fileType || null,
           version: version || "1.0.0",
         },
       });
@@ -153,11 +168,13 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   try {
     const body = await req.json();
-    const { id, title, category, content, fileUrl, version } = body;
+    const { id, title, category, folder, content, fileUrl, fileSize, fileType, version } = body;
 
     if (!id || !title || !content) {
       return NextResponse.json({ error: "Document ID, title, and content are required." }, { status: 400 });
     }
+
+    const assignedFolder = folder?.trim() || "General";
 
     try {
       const updated = await prisma.projectDocument.update({
@@ -165,8 +182,11 @@ export async function PUT(req: Request) {
         data: {
           title,
           category: category || "SOP",
+          folder: assignedFolder,
           content,
-          fileUrl: fileUrl || null,
+          fileUrl: fileUrl !== undefined ? fileUrl : undefined,
+          fileSize: fileSize !== undefined ? fileSize : undefined,
+          fileType: fileType !== undefined ? fileType : undefined,
           version: version || "1.0.0",
         },
       });
@@ -178,10 +198,13 @@ export async function PUT(req: Request) {
         docMemoryStore[idx] = {
           ...docMemoryStore[idx],
           title,
-          category: category || "SOP",
+          category: category || docMemoryStore[idx].category,
+          folder: assignedFolder,
           content,
-          fileUrl: fileUrl || null,
-          version: version || "1.0.0",
+          fileUrl: fileUrl !== undefined ? fileUrl : docMemoryStore[idx].fileUrl,
+          fileSize: fileSize !== undefined ? fileSize : docMemoryStore[idx].fileSize,
+          fileType: fileType !== undefined ? fileType : docMemoryStore[idx].fileType,
+          version: version || docMemoryStore[idx].version,
           updatedAt: new Date().toISOString(),
         };
         return NextResponse.json({ document: docMemoryStore[idx] });

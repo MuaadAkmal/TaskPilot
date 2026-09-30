@@ -61,12 +61,16 @@ model ProjectDocument {
   project    String   // Project association
   title      String
   category   String   // "SOP", "ARCHITECTURE", "TROUBLESHOOTING_GUIDE", "CHANGELOG"
+  folder     String   @default("General") // Folder categorization (e.g. "SOPs", "Architecture", "Audio Models", etc.)
   content    String
   fileUrl    String?
+  fileSize   Int?
+  fileType   String?
   version    String   @default("1.0.0")
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   @@index([project])
   @@index([category])
+  @@index([folder])
 }

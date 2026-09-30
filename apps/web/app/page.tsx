@@ -34,7 +34,7 @@ function DashboardContent() {
   const [endDate, setEndDate] = useState<string>("");
   const [sort, setSort] = useState<string>("resolvedAt_desc");
 
-  // CMS, CDR, IPDR, CIAS, TSOC, and MCX have active forms & tables enabled
+  // CMS, CDR, IPDR, CIAS, TSOC, MCX, and ASR have active forms & tables enabled
   const hasActiveTable =
     currentProject === "CMS" ||
     (currentProject as string) === "CMS_VAL_FS" ||
@@ -42,7 +42,8 @@ function DashboardContent() {
     currentProject === "IPDR" ||
     currentProject === "TSOC" ||
     currentProject === "MCX" ||
-    currentProject === "CIAS";
+    currentProject === "CIAS" ||
+    currentProject === "ASR";
 
   const fetchTasks = useCallback(async () => {
     if (!hasActiveTable) return;

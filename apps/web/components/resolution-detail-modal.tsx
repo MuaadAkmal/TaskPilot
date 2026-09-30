@@ -55,8 +55,8 @@ export function ResolutionDetailModal({ task, sequenceNum, onClose }: Resolution
 
           {/* Problem */}
           <div>
-            <h4 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider mb-1 text-slate-500">
-              Problem description / Activity Detail
+            <h4 className="text-[11px] font-bold uppercase tracking-wider mb-1 text-slate-500">
+              {task.project === "ASR" ? "Task Done" : "Problem description / Activity Detail"}
             </h4>
             <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 whitespace-pre-wrap leading-relaxed text-slate-900">
               {task.problemDescription}
@@ -67,7 +67,7 @@ export function ResolutionDetailModal({ task, sequenceNum, onClose }: Resolution
           <div>
             <h4 className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider mb-1 flex items-center space-x-1">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Verified Remediation Applied</span>
+              <span>{task.project === "ASR" ? "Inference & Findings" : "Verified Remediation Applied"}</span>
             </h4>
             <div className="p-3.5 bg-emerald-50/50 rounded-xl border border-emerald-200 whitespace-pre-wrap leading-relaxed text-emerald-950 font-medium">
               {task.solution}

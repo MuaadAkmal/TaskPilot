@@ -108,9 +108,22 @@ export function ResolutionTable({
   const isMcx = currentProject === "MCX";
   const isCias = currentProject === "CIAS";
   const isCdrOrIpdr = currentProject === "CDR" || currentProject === "IPDR";
+  const isAsr = currentProject === "ASR";
 
   // Define columns available for export based on active project
   const availableColumns: ColumnDef[] = React.useMemo(() => {
+    if (isAsr) {
+      return [
+        { id: "id", label: "Task ID", getValue: (t) => t.id },
+        { id: "date", label: "DATE", getValue: (t) => formatDateDDMMYYYY(t.resolvedAt || t.createdAt) },
+        { id: "problemDescription", label: "TASK DONE", getValue: (t) => t.problemDescription },
+        { id: "solution", label: "INFERENCE", getValue: (t) => t.solution },
+        { id: "status", label: "STATUS", getValue: (t) => t.status },
+        { id: "tsp", label: "COMPONENT", getValue: (t) => t.tsp },
+        { id: "raisedByName", label: "LOGGED BY", getValue: (t) => t.raisedByName },
+        { id: "remarks", label: "REMARKS", getValue: (t) => t.remarks || "" },
+      ];
+    }
     if (isCdrOrIpdr) {
       return [
         { id: "id", label: "Ticket ID", getValue: (t) => t.id },
@@ -163,7 +176,7 @@ export function ResolutionTable({
       { id: "remarks", label: "Remarks", getValue: (t) => t.remarks || "" },
       { id: "createdBy", label: "Recorded By", getValue: (t) => t.createdByEmail || t.createdByName || "N/A" },
     ];
-  }, [currentProject, isCdrOrIpdr, isCias, isTsoc, isMcx, activeProjectMeta]);
+  }, [currentProject, isAsr, isCdrOrIpdr, isCias, isTsoc, isMcx, activeProjectMeta]);
 
   // Selected column IDs for export (default all selected)
   const [selectedColumnIds, setSelectedColumnIds] = useState<string[]>([]);
@@ -738,7 +751,36 @@ export function ResolutionTable({
       <div className="overflow-x-auto min-h-[360px]">
         <table className="w-full text-left text-xs table-fixed">
           <thead>
-            {isCdrOrIpdr ? (
+            {isAsr ? (
+              /* ASR Columns: DATE, TASK DONE, INFERENCE, STATUS, LOGGED BY */
+              <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 text-[11px] font-medium text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+                <th className="py-2.5 px-3 w-8" onClick={(e) => e.stopPropagation()}>
+                  <button onClick={toggleSelectAllRows} className="flex items-center justify-center">
+                    {tasks.length > 0 && selectedRowIds.length === tasks.length ? (
+                      <CheckSquare className="w-4 h-4 text-slate-900 dark:text-slate-100" />
+                    ) : (
+                      <Square className="w-4 h-4 text-slate-400" />
+                    )}
+                  </button>
+                </th>
+                <th className="py-2.5 px-3.5 w-12">#</th>
+                <th
+                  className="py-2.5 px-3 w-36 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 select-none"
+                  onClick={() => setSort(sort === "resolvedAt_desc" ? "resolvedAt_asc" : "resolvedAt_desc")}
+                  title="Click to sort by date"
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>DATE</span>
+                    <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                  </div>
+                </th>
+                <th className="py-2.5 px-3 w-[36%]">TASK DONE</th>
+                <th className="py-2.5 px-3 w-[36%]">INFERENCE</th>
+                <th className="py-2.5 px-3 w-24">STATUS</th>
+                <th className="py-2.5 px-3 w-28">LOGGED BY</th>
+                <th className="py-2.5 px-3 text-right w-16">Actions</th>
+              </tr>
+            ) : isCdrOrIpdr ? (
               /* CDR & IPDR Columns: LSA, TSP, DATE, STATUS, REQUEST RAISED BY, PROBLEM DESCRIPTION, SOLUTION, REMARKS */
               <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 text-[11px] font-medium text-slate-400 dark:text-slate-400 uppercase tracking-wider">
                 <th className="py-2.5 px-3 w-8" onClick={(e) => e.stopPropagation()}>
@@ -900,7 +942,23 @@ export function ResolutionTable({
                       #{sequenceNum}
                     </td>
 
-                  {isCdrOrIpdr ? (
+                  {isAsr ? (
+                    <>
+                      <td className="py-2.5 px-3 text-slate-600 dark:text-slate-400 font-mono text-[11px] whitespace-nowrap">
+                        {formatDateSept25th(task.resolvedAt || task.createdAt)}
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-800 dark:text-slate-200 truncate font-medium">
+                        {task.problemDescription}
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-700 dark:text-slate-300 truncate font-mono text-[11px]">
+                        {task.solution}
+                      </td>
+                      <td className="py-2.5 px-3">{getStatusBadge(task.status)}</td>
+                      <td className="py-2.5 px-3 font-medium text-slate-700 dark:text-slate-300 truncate">
+                        {task.raisedByName}
+                      </td>
+                    </>
+                  ) : isCdrOrIpdr ? (
                     <>
                       <td className="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-200 truncate">
                         {task.lsa}
